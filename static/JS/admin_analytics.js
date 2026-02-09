@@ -1,4 +1,4 @@
-let adminDepartmentAvgChart = null;
+    let adminDepartmentAvgChart = null;
 let adminUniversityTrendChart = null;
 let adminLowestChart = null;
 
