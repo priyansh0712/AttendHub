@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance | AttendHub Faculty</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-accent: #6CB1DA;
+            --secondary-accent: #D1ECFF;
+            --bg-gradient-start: #35577D;
+            --bg-gradient-end: #141E30;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, var(--bg-gradient-start), var(--bg-gradient-end));
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        /* --- Layout Structure --- */
+        #wrapper {
+            display: flex;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        /* --- Sidebar --- */
+        #sidebar-wrapper {
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            background: rgba(255, 255, 255, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: margin 0.3s ease, width 0.3s ease;
+            position: fixed;
+            z-index: 1000;
+            top: 56px; /* Below Navbar */
+            left: 0;
+            overflow-y: auto;
+        }
+
+        #wrapper.toggled #sidebar-wrapper {
+            margin-left: calc(-1 * var(--sidebar-width));
+        }
+
+        /* --- Main Content --- */
+        #page-content-wrapper {
+            width: 100%;
+            padding-left: var(--sidebar-width);
+            padding-top: 56px; /* Navbar Height */
+            transition: padding-left 0.3s ease;
+            min-height: 100vh;
+        }
+
+        #wrapper.toggled #page-content-wrapper {
+            padding-left: 0;
+        }
+
+        /* --- Navbar --- */
+        .navbar-academic {
+            background-color: #1a2533; /* Darker tone of gradient end */
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            height: 56px;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Sidebar Menu --- */
+        .sidebar-heading {
+            padding: 1.5rem 1.25rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            font-weight: 700;
+        }
+
+        .list-group-item {
+            border: none;
+            padding: 15px 25px;
+            font-size: 0.95rem;
+            color: #495057;
+            background: transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            color: var(--bg-gradient-start);
+            padding-left: 30px;
+        }
+        
+        .list-group-item.active {
+            color: var(--bg-gradient-start);
+            background-color: #e9ecef;
+            border-left: 4px solid var(--bg-gradient-start);
+            font-weight: 600;
+        }
+
+        .list-group-item i {
+            width: 25px;
+            text-align: center;
+            margin-right: 10px;
+        }
+
+        /* --- Cards & UI Elements --- */
+        .card-academic {
+            background: white;
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .table-academic th {
+            font-weight: 600;
+            color: #35577D;
+            border-bottom: 2px solid #e9ecef;
+            background-color: #f8f9fa;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        
+        .table-academic td {
+            vertical-align: middle;
+            font-size: 0.95rem;
+        }
+        
+        /* Attendance Toggle */
+        .btn-check:checked + .btn-outline-success {
+            background-color: #198754;
+            color: white;
+        }
+        .btn-check:checked + .btn-outline-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* --- Responsive Behavior --- */
+        @media (max-width: 768px) {
+            #sidebar-wrapper {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            #wrapper.toggled #sidebar-wrapper {
+                margin-left: 0;
+            }
+            #page-content-wrapper {
+                padding-left: 0;
+            }
+            #wrapper.toggled #page-content-wrapper {
+                padding-left: 0; /* Overlay on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-academic fixed-top">
+        <div class="container-fluid">
+            <button class="btn text-white me-3" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chalkboard-teacher me-2"></i>AttendHub Faculty
+            </a>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                    <li class="nav-item dropdown me-3" id="notificationsNavItem">
+                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell text-white fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">1</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 300px;">
+                            <li><h6 class="dropdown-header"><i class="fas fa-info-circle text-info me-2"></i>Notifications</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">
+                                <small class="text-muted">Attendance report for "Data Structures" is due by Friday.</small>
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item me-3 d-flex align-items-center">
+                        <a href="/faculty/profile" class="d-flex align-items-center text-white text-decoration-none">
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                <span id="navbarFacultyInitials" class="small fw-bold text-dark">F</span>
+                            </div>
+                            <strong id="navbarFacultyName">Faculty</strong>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">Faculty Menu</div>
+            <div class="list-group list-group-flush">
+                <a href="/faculty/dashboard" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/faculty/schedule" class="list-group-item list-group-item-action">
+                    <i class="fas fa-calendar-check"></i> My Schedule
+                </a>
+                <a href="/faculty/mark-attendance" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-user-check"></i> Take Attendance
+                </a>
+                <a href="/faculty/students" class="list-group-item list-group-item-action">
+                    <i class="fas fa-users"></i> Student List
+                </a>
+                <a href="/faculty/reports" class="list-group-item list-group-item-action">
+                    <i class="fas fa-history"></i> Attendance History
+                </a>
+                <a href="/faculty/analysis" class="list-group-item list-group-item-action">
+                    <i class="fas fa-chart-column"></i> Analysis
+                </a>
+                <div class="sidebar-heading mt-3">Account</div>
+                <a href="/faculty/profile" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user-circle"></i> My Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid p-4">
+                
+                <!-- Page Title -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="text-white">
+                        <h2 class="h4 mb-0 fw-bold">Mark Attendance</h2>
+                        <p class="mb-0 small opacity-75">Select a lecture to mark attendance or preview</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-academic p-4 mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                <h5 class="mb-0 text-primary">Today's Lectures</h5>
+                                <button type="button" class="btn btn-sm btn-outline-light border" id="refreshLecturesBtn">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-academic align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Subject</th>
+                                            <th style="width: 180px;">Time</th>
+                                            <th style="width: 140px;">Status</th>
+                                            <th class="text-end" style="width: 160px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="todayLecturesBody">
+                                        <tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card-academic p-4 mb-4" id="markPanel" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+                                <div>
+                                    <h5 class="mb-1 text-primary" id="markPanelTitle">Mark Attendance</h5>
+                                    <small class="text-muted" id="markPanelSubtitle">Only students of this class are shown.</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-warning text-dark" id="markPanelBadge">Pending Submission</span>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive mb-4">
+                                <table class="table table-hover table-academic align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 15%;">Roll No.</th>
+                                            <th style="width: 45%;">Student Name</th>
+                                            <th style="width: 40%;" class="text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTableBody">
+                                        <tr><td colspan="3" class="text-center text-muted py-4">Select a lecture above.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                                <button type="button" class="btn btn-outline-secondary" id="closeMarkPanelBtn">Close</button>
+                                <button type="button" class="btn btn-primary px-4" id="submitAttendanceBtn"><i class="fas fa-save me-2"></i>Submit Attendance</button>
+                            </div>
+                        </div>
+
+                        <div class="card-academic p-4" id="previewPanel" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+                                <div>
+                                    <h5 class="mb-1 text-primary" id="previewPanelTitle">Attendance Preview</h5>
+                                    <small class="text-muted" id="previewPanelSubtitle">Read-only</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary text-white">Locked</span>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-academic align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 15%;">Roll No.</th>
+                                            <th style="width: 55%;">Student Name</th>
+                                            <th style="width: 30%;" class="text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="previewTableBody">
+                                        <tr><td colspan="3" class="text-center text-muted py-4">Select a lecture to preview.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                                <button type="button" class="btn btn-outline-secondary" id="closePreviewPanelBtn">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-check-circle me-2"></i>Confirm Submission</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-0 fs-5">Are you sure you want to finalize attendance?</p>
+                    <p class="text-muted small mt-2">Please verify that all students are marked correctly.<br>This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer bg-light justify-content-center border-0">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Go Back</button>
+                    <button type="button" class="btn btn-success px-4 fw-bold" id="confirmFinalSubmit">
+                        Confirm & Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='JS/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/logout.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/faculty_layout.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/mark_attendance.js') }}"></script>
+    <script>
+        // Toggle Sidebar
+        var el = document.getElementById("wrapper");
+        var toggleButton = document.getElementById("menu-toggle");
+
+        toggleButton.onclick = function () {
+            el.classList.toggle("toggled");
+        };
+
+        // Validation + Confirmation (mark panel only)
+        document.addEventListener('DOMContentLoaded', function() {
+            const submitBtn = document.getElementById('submitAttendanceBtn');
+            const confirmBtn = document.getElementById('confirmFinalSubmit');
+            let confirmModal;
+
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function() {
+                    // Initialize modal if not already done
+                    if (!confirmModal) {
+                        confirmModal = new bootstrap.Modal(document.getElementById('confirmSubmitModal'));
+                    }
+
+                    const rows = document.querySelectorAll('#studentTableBody tr');
+                    let allMarked = true;
+                    let unmarkedRows = 0;
+
+                    rows.forEach(row => row.classList.remove('table-danger'));
+
+                    rows.forEach(row => {
+                        const radios = row.querySelectorAll('input[type="radio"]');
+                        if (radios.length === 0) return;
+
+                        let isRowMarked = false;
+                        radios.forEach(radio => {
+                            if (radio.checked) isRowMarked = true;
+                        });
+
+                        if (!isRowMarked) {
+                            allMarked = false;
+                            unmarkedRows++;
+                            row.classList.add('table-danger');
+                        }
+                    });
+
+                    if (!allMarked) {
+                        alert(`Action Required: ${unmarkedRows} student(s) have not been marked.\nPlease ensure every student has a status (Present/Absent).`);
+                        const firstError = document.querySelector('#studentTableBody .table-danger');
+                        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        confirmModal.show();
+                    }
+                });
+            }
+
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', async function() {
+                    try {
+                        await submitAttendance();
+                        if (confirmModal) confirmModal.hide();
+                    } catch (err) {
+                        // submitAttendance() already alerts
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

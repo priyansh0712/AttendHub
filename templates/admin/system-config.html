@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Configuration | AttendHub</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-accent: #6CB1DA;
+            --secondary-accent: #D1ECFF;
+            --bg-gradient-start: #35577D;
+            --bg-gradient-end: #141E30;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, var(--bg-gradient-start), var(--bg-gradient-end));
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        /* --- Layout Structure --- */
+        #wrapper {
+            display: flex;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        /* --- Sidebar --- */
+        #sidebar-wrapper {
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            background: rgba(255, 255, 255, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: margin 0.3s ease, width 0.3s ease;
+            position: fixed;
+            z-index: 1000;
+            top: 56px; /* Below Navbar */
+            left: 0;
+            overflow-y: auto;
+        }
+
+        #wrapper.toggled #sidebar-wrapper {
+            margin-left: calc(-1 * var(--sidebar-width));
+        }
+
+        /* --- Main Content --- */
+        #page-content-wrapper {
+            width: 100%;
+            padding-left: var(--sidebar-width);
+            padding-top: 56px; /* Navbar Height */
+            transition: padding-left 0.3s ease;
+            min-height: 100vh;
+        }
+
+        #wrapper.toggled #page-content-wrapper {
+            padding-left: 0;
+        }
+
+        /* --- Navbar --- */
+        .navbar-academic {
+            background-color: #1a2533; /* Darker tone of gradient end */
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            height: 56px;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Sidebar Menu --- */
+        .sidebar-heading {
+            padding: 1.5rem 1.25rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            font-weight: 700;
+        }
+
+        .list-group-item {
+            border: none;
+            padding: 15px 25px;
+            font-size: 0.95rem;
+            color: #495057;
+            background: transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            color: var(--bg-gradient-start);
+            padding-left: 30px;
+        }
+        
+        .list-group-item.active {
+            color: var(--bg-gradient-start);
+            background-color: #e9ecef;
+            border-left: 4px solid var(--bg-gradient-start);
+            font-weight: 600;
+        }
+
+        /* --- Page Cards & Tables --- */
+        .card-academic {
+            background-color: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .table-academic th {
+            font-weight: 600;
+            color: #35577D;
+            border-bottom: 2px solid #e9ecef;
+            background-color: #f8f9fa;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        
+        .table-academic td {
+            vertical-align: middle;
+            font-size: 0.95rem;
+        }
+
+        /* --- Responsive Behavior --- */
+        @media (max-width: 768px) {
+            #sidebar-wrapper {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            #wrapper.toggled #sidebar-wrapper {
+                margin-left: 0;
+            }
+            #page-content-wrapper {
+                padding-left: 0;
+            }
+            #wrapper.toggled #page-content-wrapper {
+                padding-left: 0; /* Overlay on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-academic fixed-top">
+        <div class="container-fluid">
+            <button class="btn text-white me-3" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-clipboard-check me-2"></i>AttendHub
+            </a>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                    <li id="notificationsNavItem" class="nav-item dropdown me-3">
+                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell text-white fs-5"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 300px;">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="px-3 py-2 text-muted small">No notifications</li>
+                        </ul>
+                    </li>
+                    <li class="nav-item me-3 d-flex align-items-center">
+                        <a href="/admin/university-profile" class="d-flex align-items-center text-white text-decoration-none">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <strong id="navbarAdminName">Admin</strong>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">Main Menu</div>
+            <div class="list-group list-group-flush">
+                <a href="/admin/dashboard" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/admin/university-profile" class="list-group-item list-group-item-action">
+                    <i class="fas fa-school"></i> University Profile
+                </a>
+                <a href="/admin/faculty" class="list-group-item list-group-item-action">
+                    <i class="fas fa-chalkboard-teacher"></i> Faculty Management
+                </a>
+                <a href="/admin/students" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user-graduate"></i> Student Management
+                </a>
+                <a href="/admin/timetable" class="list-group-item list-group-item-action">
+                    <i class="fas fa-calendar-alt"></i> Timetable Management
+                </a>
+                <a href="/admin/reports" class="list-group-item list-group-item-action">
+                    <i class="fas fa-file-invoice"></i> Reports
+                </a>
+                <a href="/admin/analysis" class="list-group-item list-group-item-action">
+                    <i class="fas fa-chart-column"></i> Analysis
+                </a>
+                <div class="sidebar-heading mt-3">Settings</div>
+                <a href="/admin/plan" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tags"></i> Plan & Subscription
+                </a>
+                <a href="/admin/system-config" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-cogs"></i> System Configuration
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid p-4">
+                
+                <!-- Action Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="text-white">
+                        <h2 class="h4 mb-0 fw-bold">System Configuration</h2>
+                        <p class="mb-0 small opacity-75">Global application settings and preferences</p>
+                    </div>
+                    <button class="btn btn-primary fw-bold px-4">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="row g-4">
+                    
+                    <!-- Attendance Settings -->
+                    <div class="col-md-6">
+                        <div class="card-academic h-100 p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="bg-primary text-white p-2 rounded me-3">
+                                    <i class="fas fa-user-check fa-lg"></i>
+                                </div>
+                                <h5 class="fw-bold mb-0">Attendance Settings</h5>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0 mb-3">
+                                    <div>
+                                        <label class="form-check-label fw-bold" for="manualAttendance">Manual Attendance Options</label>
+                                        <div class="text-muted small mt-1">Allow faculty to manually override or mark attendance.</div>
+                                    </div>
+                                    <input class="form-check-input ms-3" type="checkbox" role="switch" id="manualAttendance" checked style="width: 3em; height: 1.5em;">
+                                </div>
+                            </div>
+
+                            <hr class="text-muted opacity-25">
+
+                            <div class="mb-2">
+                                <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0 mb-3">
+                                    <div>
+                                        <label class="form-check-label fw-bold" for="proxyDetection">AI Proxy Detection</label>
+                                        <div class="text-muted small mt-1">Enable AI algorithms to flag potential proxy attendance.</div>
+                                    </div>
+                                    <input class="form-check-input ms-3" type="checkbox" role="switch" id="proxyDetection" checked style="width: 3em; height: 1.5em;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="col-md-6">
+                        <div class="card-academic h-100 p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="bg-primary text-white p-2 rounded me-3">
+                                    <i class="fas fa-bell fa-lg"></i>
+                                </div>
+                                <h5 class="fw-bold mb-0">Notifications</h5>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0 mb-3">
+                                    <div>
+                                        <label class="form-check-label fw-bold" for="emailAlerts">Email Alerts</label>
+                                        <div class="text-muted small mt-1">Send critical updates to faculty and admins via email.</div>
+                                    </div>
+                                    <input class="form-check-input ms-3" type="checkbox" role="switch" id="emailAlerts" checked style="width: 3em; height: 1.5em;">
+                                </div>
+                            </div>
+
+                            <hr class="text-muted opacity-25">
+
+                            <div class="mb-2">
+                                <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0 mb-3">
+                                    <div>
+                                        <label class="form-check-label fw-bold" for="smsAlerts">SMS Alerts (Beta)</label>
+                                        <div class="text-muted small mt-1">Enable SMS notifications for attendance (coming soon).</div>
+                                    </div>
+                                    <input class="form-check-input ms-3" type="checkbox" role="switch" id="smsAlerts" disabled style="width: 3em; height: 1.5em;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle Sidebar
+        document.getElementById("menu-toggle").addEventListener("click", function() {
+            document.getElementById("wrapper").classList.toggle("toggled");
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='JS/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/admin_layout.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/logout.js') }}"></script>
+</body>
+</html>

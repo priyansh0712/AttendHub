@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Profile | AttendHub</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-accent: #6CB1DA;
+            --secondary-accent: #D1ECFF;
+            --bg-gradient-start: #35577D;
+            --bg-gradient-end: #141E30;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, var(--bg-gradient-start), var(--bg-gradient-end));
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        /* --- Layout Structure --- */
+        #wrapper {
+            display: flex;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        /* --- Sidebar --- */
+        #sidebar-wrapper {
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            background: rgba(255, 255, 255, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: margin 0.3s ease, width 0.3s ease;
+            position: fixed;
+            z-index: 1000;
+            top: 56px; /* Below Navbar */
+            left: 0;
+            overflow-y: auto;
+        }
+
+        #wrapper.toggled #sidebar-wrapper {
+            margin-left: calc(-1 * var(--sidebar-width));
+        }
+
+        /* --- Main Content --- */
+        #page-content-wrapper {
+            width: 100%;
+            padding-left: var(--sidebar-width);
+            padding-top: 56px; /* Navbar Height */
+            transition: padding-left 0.3s ease;
+            min-height: 100vh;
+        }
+
+        #wrapper.toggled #page-content-wrapper {
+            padding-left: 0;
+        }
+
+        /* --- Navbar --- */
+        .navbar-academic {
+            background-color: #1a2533; /* Darker tone of gradient end */
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            height: 56px;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Sidebar Menu --- */
+        .sidebar-heading {
+            padding: 1.5rem 1.25rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            font-weight: 700;
+        }
+
+        .list-group-item {
+            border: none;
+            padding: 15px 25px;
+            font-size: 0.95rem;
+            color: #495057;
+            background: transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            color: var(--bg-gradient-start);
+            padding-left: 30px;
+        }
+        
+        .list-group-item.active {
+            color: var(--bg-gradient-start);
+            background-color: #e9ecef;
+            border-left: 4px solid var(--bg-gradient-start);
+            font-weight: 600;
+        }
+
+        /* --- Page Cards --- */
+        .card-academic {
+            background-color: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-label-academic {
+            font-weight: 600;
+            color: #35577D;
+            font-size: 0.9rem;
+        }
+
+        .form-control-academic {
+            border: 1px solid #ced4da;
+            padding: 0.6rem 0.75rem;
+        }
+
+        .form-control-academic:focus {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 0.25rem rgba(108, 177, 218, 0.25);
+        }
+
+        .form-control-plaintext {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        /* --- Responsive Behavior --- */
+        @media (max-width: 768px) {
+            #sidebar-wrapper {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            #wrapper.toggled #sidebar-wrapper {
+                margin-left: 0;
+            }
+            #page-content-wrapper {
+                padding-left: 0;
+            }
+            #wrapper.toggled #page-content-wrapper {
+                padding-left: 0; /* Overlay on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-academic fixed-top">
+        <div class="container-fluid">
+            <button class="btn text-white me-3" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-clipboard-check me-2"></i>AttendHub
+            </a>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                    <li id="notificationsNavItem" class="nav-item dropdown me-3">
+                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell text-white fs-5"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 300px;">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="px-3 py-2 text-muted small">No notifications</li>
+                        </ul>
+                    </li>
+                    <li class="nav-item me-3 d-flex align-items-center">
+                        <a href="/admin/university-profile" class="d-flex align-items-center text-white text-decoration-none">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <strong id="navbarAdminName">Admin</strong>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">Main Menu</div>
+            <div class="list-group list-group-flush">
+                <a href="/admin/dashboard" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/admin/university-profile" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-school"></i> University Profile
+                </a>
+                <a href="/admin/faculty" class="list-group-item list-group-item-action">
+                    <i class="fas fa-chalkboard-teacher"></i> Faculty Management
+                </a>
+                <a href="/admin/students" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user-graduate"></i> Student Management
+                </a>
+                <a href="/admin/timetable" class="list-group-item list-group-item-action">
+                    <i class="fas fa-calendar-alt"></i> Timetable Management
+                </a>
+                <a href="/admin/reports" class="list-group-item list-group-item-action">
+                    <i class="fas fa-file-invoice"></i> Reports
+                </a>
+                <a href="/admin/analysis" class="list-group-item list-group-item-action">
+                    <i class="fas fa-chart-column"></i> Analysis
+                </a>
+                <div class="sidebar-heading mt-3">Settings</div>
+                <a href="/admin/plan" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tags"></i> Plan & Subscription
+                </a>
+                <a href="/admin/system-config" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cogs"></i> System Configuration
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid p-4">
+                
+                <!-- Page Title Area -->
+                <div class="d-flex justify-content-between align-items-center mb-4 text-white">
+                    <div>
+                        <h2 class="h4 mb-0 fw-bold">University Profile</h2>
+                        <p class="mb-0 small opacity-75">Manage university details and administrative contact information</p>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Left Column: University Details Form -->
+                    <div class="col-lg-8">
+                        <div class="card-academic p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-university me-2 text-primary"></i>Institution Details</h5>
+                                <div>
+                                    <span id="systemStatusBadge" class="badge bg-success me-1"><i class="fas fa-check-circle me-1"></i>System Active</span>
+                                    <span id="planBadge" class="badge bg-info text-dark"><i class="fas fa-star me-1"></i>Free License</span>
+                                </div>
+                            </div>
+
+                            <form id="universityProfileForm">
+                                <div class="row mb-3">
+                                    <label class="col-sm-3 col-form-label form-label-academic">University Name</label>
+                                    <div class="col-sm-9">
+                                        <input id="uniNameInput" type="text" class="form-control form-control-academic" value="">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label class="col-sm-3 col-form-label form-label-academic">University ID</label>
+                                    <div class="col-sm-9">
+                                        <input id="uniIdInput" type="text" readonly class="form-control-plaintext font-monospace" value="">
+                                    </div>
+                                </div>
+                                <hr class="my-4 opacity-25">
+                                
+                                <div class="mb-3">
+                                    <label class="form-label form-label-academic">Registered Address</label>
+                                    <textarea id="registeredAddressInput" class="form-control form-control-academic" rows="3" placeholder="Enter registered address"></textarea>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label form-label-academic">Official Contact Email</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                                            <input id="contactEmailInput" type="email" class="form-control form-control-academic border-start-0" value="" placeholder="contact@example.edu">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label form-label-academic">Official Contact Phone</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-phone text-muted"></i></span>
+                                            <input id="contactPhoneInput" type="tel" class="form-control form-control-academic border-start-0" value="" placeholder="+91 98xxxxxx">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <label class="form-label form-label-academic">Website URL</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-globe text-muted"></i></span>
+                                            <input id="websiteUrlInput" type="url" class="form-control form-control-academic border-start-0" value="" placeholder="https://youruniversity.edu">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end pt-2">
+                                    <button id="saveUniversityProfileBtn" type="button" class="btn btn-primary px-4 fw-bold">
+                                        <i class="fas fa-save me-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Admin Profile Card -->
+                    <div class="col-lg-4">
+                        <div class="card-academic p-4 mb-4">
+                            <h5 class="border-bottom pb-3 mb-4 fw-bold text-dark"><i class="fas fa-user-shield me-2 text-primary"></i>Admin Profile</h5>
+                            
+                            <div class="text-center mb-4">
+                                <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                                    <span id="adminInitials">--</span>
+                                </div>
+                                <h5 id="adminNameText" class="fw-bold mb-1">Admin</h5>
+                                <p id="adminRoleText" class="text-muted small mb-0">System Administrator</p>
+                            </div>
+
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span class="text-muted small">Status</span>
+                                    <span id="adminStatusBadge" class="badge bg-success rounded-pill">Active</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span class="text-muted small">Role</span>
+                                    <span id="adminRoleValue" class="fw-semibold small">Admin</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span class="text-muted small">Email</span>
+                                    <span id="adminEmailText" class="fw-semibold small">—</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-bottom-0">
+                                    <span class="text-muted small">Account Created</span>
+                                    <span id="adminCreatedText" class="fw-semibold small">—</span>
+                                </li>
+                            </ul>
+                            
+                            <div class="d-grid gap-2 mt-3">
+                                <button class="btn btn-outline-secondary btn-sm" id="changePasswordBtn">
+                                    <i class="fas fa-key me-1"></i> Change Password
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-academic p-4">
+                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">System Info</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="text-muted">Version</small>
+                                <small class="fw-bold">v2.4.0 (Beta)</small>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="text-muted">Database</small>
+                                <small class="fw-bold text-success">Connected</small>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Last Backup</small>
+                                <small class="fw-bold">Today, 04:00 AM</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Shared API helper -->
+    <script src="/static/JS/api.js"></script>
+
+    <!-- Shared layout bindings -->
+    <script src="/static/JS/admin_layout.js"></script>
+
+    <!-- Logout wiring -->
+    <script src="/static/JS/logout.js"></script>
+
+    <!-- Page script -->
+    <script src="/static/JS/university_profile.js"></script>
+
+    <!-- Password change wiring -->
+    <script src="/static/JS/change_password.js"></script>
+    
+    <!-- Sidebar Toggle Logic -->
+    <script>
+        var el = document.getElementById("wrapper");
+        var toggleButton = document.getElementById("menu-toggle");
+
+        toggleButton.onclick = function () {
+            el.classList.toggle("toggled");
+        };
+    </script>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold mb-0"><i class="fas fa-key me-2 text-primary"></i>Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Current password</label>
+                        <input type="password" class="form-control" id="cpCurrentPassword" placeholder="Enter current password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New password</label>
+                        <input type="password" class="form-control" id="cpNewPassword" placeholder="Enter new password">
+                        <div class="form-text">Minimum 6 characters.</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Confirm new password</label>
+                        <input type="password" class="form-control" id="cpConfirmPassword" placeholder="Confirm new password">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="cpSubmitBtn">Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
