@@ -51,7 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (successCount > 0) {
-                    alert(`Timetable imported: ${successCount} row(s).`);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast({
+                            type: 'success',
+                            title: 'Imported',
+                            message: `Timetable imported: ${successCount} row(s).`
+                        });
+                    }
                     fileInput.value = '';
                     loadTimetable();
                 }

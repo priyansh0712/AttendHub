@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadStudents();
 
+    function notify(type, message, title) {
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type, title: title || undefined, message });
+        } else {
+            console.warn(`[${type}] ${title ? title + ': ' : ''}${message}`);
+        }
+    }
+
     // Search / filter
     const studentSearchInput = document.getElementById('studentSearchInput');
     if (studentSearchInput) {
@@ -49,11 +57,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!isEdit) {
                 if (!password || password.length < 6) {
-                    alert('Password must be at least 6 characters');
+                    notify('warning', 'Password must be at least 6 characters', 'Validation');
                     return;
                 }
             } else if (password && password.length < 6) {
-                alert('Password must be at least 6 characters');
+                notify('warning', 'Password must be at least 6 characters', 'Validation');
                 return;
             }
 
@@ -89,11 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (studentIdEl) studentIdEl.value = '';
                 resetStudentFormMode();
 
-                alert(isEdit ? 'Student updated successfully!' : 'Student registered successfully!');
+                notify('success', isEdit ? 'Student updated successfully!' : 'Student registered successfully!', 'Success');
                 loadStudents(); // Refresh table
             } catch (error) {
                 console.error('Error:', error);
-                alert(getApiErrorMessage(error, isEdit ? 'Failed to update student' : 'Failed to register student'));
+                notify('error', getApiErrorMessage(error, isEdit ? 'Failed to update student' : 'Failed to register student'), 'Error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
@@ -122,14 +130,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const newStatus = !Boolean(student.is_active);
                 const action = newStatus ? 'Activate' : 'Deactivate';
-                if (!confirm(`${action} this student account?`)) return;
+                if (typeof window.glassConfirm === 'function') {
+                    const ok = await window.glassConfirm({
+                        type: newStatus ? 'warning' : 'danger',
+                        title: `${action} Student`,
+                        message: `${action} this student account?`,
+                        confirmText: action,
+                        cancelText: 'Cancel'
+                    });
+                    if (!ok) return;
+                }
 
                 try {
                     await apiPostJson('/api/admin/student/status', { student_id: id, is_active: newStatus });
                     loadStudents();
                 } catch (error) {
                     console.error('Error:', error);
-                    alert(getApiErrorMessage(error, `Failed to ${action.toLowerCase()} student`));
+                    notify('error', getApiErrorMessage(error, `Failed to ${action.toLowerCase()} student`), 'Error');
                 }
             }
         });

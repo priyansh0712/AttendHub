@@ -1,6 +1,6 @@
 from db_connection import get_connection, close_connection
-from exceptions.custom_exceptions import DatabaseError
-from mysql.connector import Error
+from exceptions.custom_exceptions import DatabaseError, DuplicateRecordError
+from mysql.connector import Error, IntegrityError
 
 class AdminRepository:
     """
@@ -26,7 +26,10 @@ class AdminRepository:
             conn.commit()
             
             return cursor.lastrowid
-            
+
+        except IntegrityError:
+            # Duplicate key (e.g., unique email) or other integrity constraints
+            raise DuplicateRecordError("Admin email already exists")
         except Error as e:
             raise DatabaseError(f"Failed to create admin: {e}")
         finally:

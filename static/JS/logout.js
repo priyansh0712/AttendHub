@@ -14,9 +14,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             link.addEventListener('click', async function(e) {
                 e.preventDefault();
-                
-                if (!confirm('Are you sure you want to logout?')) {
-                    return;
+
+                if (typeof window.glassConfirm === 'function') {
+                    const ok = await window.glassConfirm({
+                        type: 'warning',
+                        title: 'Logout',
+                        message: 'Are you sure you want to logout?',
+                        confirmText: 'Logout',
+                        cancelText: 'Cancel'
+                    });
+                    if (!ok) return;
                 }
 
                 try {

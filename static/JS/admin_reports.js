@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     await fetchReports();
-    applyFiltersAndRender();
 });
 
 async function fetchReports() {

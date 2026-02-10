@@ -1,289 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis | AttendHub Student</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Analysis | AttendHub Student</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <style>
-        :root {
-            --primary-accent: #6CB1DA;
-            --secondary-accent: #D1ECFF;
-            --bg-gradient-start: #35577D;
-            --bg-gradient-end: #141E30;
-            --sidebar-width: 250px;
-            --sidebar-collapsed-width: 70px;
-        }
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Recursive:wght@300..800&display=swap" rel="stylesheet">
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, var(--bg-gradient-start), var(--bg-gradient-end));
-            overflow-x: hidden;
-            color: #333;
-        }
-
-        #wrapper {
-            display: flex;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        #sidebar-wrapper {
-            min-height: 100vh;
-            width: var(--sidebar-width);
-            background: rgba(255, 255, 255, 0.95);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            transition: margin 0.3s ease, width 0.3s ease;
-            position: fixed;
-            z-index: 1000;
-            top: 56px;
-            left: 0;
-            overflow-y: auto;
-        }
-
-        #wrapper.toggled #sidebar-wrapper {
-            margin-left: calc(-1 * var(--sidebar-width));
-        }
-
-        #page-content-wrapper {
-            width: 100%;
-            padding-left: var(--sidebar-width);
-            padding-top: 56px;
-            transition: padding-left 0.3s ease;
-            min-height: 100vh;
-        }
-
-        #wrapper.toggled #page-content-wrapper {
-            padding-left: 0;
-        }
-
-        .navbar-academic {
-            background-color: #1a2533;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            height: 56px;
-        }
-
-        .navbar-brand {
-            font-weight: 600;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-        }
-
-        .sidebar-heading {
-            padding: 1.5rem 1.25rem;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #6c757d;
-            font-weight: 700;
-        }
-
-        .list-group-item {
-            border: none;
-            padding: 15px 25px;
-            font-size: 0.95rem;
-            color: #495057;
-            background: transparent;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .list-group-item:hover {
-            background-color: #f8f9fa;
-            color: var(--bg-gradient-start);
-            padding-left: 30px;
-        }
-
-        .list-group-item.active {
-            color: var(--bg-gradient-start);
-            background-color: #e9ecef;
-            border-left: 4px solid var(--bg-gradient-start);
-            font-weight: 600;
-        }
-
-        .list-group-item i {
-            width: 25px;
-            text-align: center;
-            margin-right: 10px;
-        }
-
-        .card-academic {
-            background: white;
-            border: none;
-            border-radius: 6px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem;
-        }
-
-        @media (max-width: 768px) {
-            #sidebar-wrapper {
-                margin-left: calc(-1 * var(--sidebar-width));
-            }
-            #wrapper.toggled #sidebar-wrapper {
-                margin-left: 0;
-            }
-            #page-content-wrapper {
-                padding-left: 0;
-            }
-            #wrapper.toggled #page-content-wrapper {
-                padding-left: 0;
-            }
-        }
-    </style>
+	<link rel="stylesheet" href="{{ url_for('static', filename='CSS/dashboard_glass.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='CSS/ui_glass_overlay.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='CSS/toast.css') }}">
 </head>
 <body>
 
-    <!-- Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-academic fixed-top">
-        <div class="container-fluid">
-            <button class="btn text-white me-3" id="menu-toggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-user-graduate me-2"></i>AttendHub Student
-            </a>
+	<nav class="navbar navbar-expand-lg navbar-academic fixed-top">
+		<div class="container-fluid">
+			<button class="btn me-3" id="menu-toggle" type="button" aria-label="Toggle sidebar">
+				<i class="fas fa-bars"></i>
+			</button>
+			<a class="navbar-brand" href="#">
+				<i class="fas fa-user-graduate me-2"></i>AttendHub Student
+			</a>
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-                    <li class="nav-item">
-                        <button class="btn btn-sm btn-outline-light" id="logoutBtn">
-                            <i class="fas fa-sign-out-alt me-1"></i> Logout
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+					<li class="nav-item me-2">
+						<button class="btn btn-sm btn-action" id="themeToggle" type="button" aria-pressed="false">
+							<i class="fas fa-sun"></i>
+						</button>
+					</li>
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							<img id="studentAvatarTop" src="https://ui-avatars.com/api/?name=Student+User&background=random" alt="User" class="rounded-circle me-2" width="32" height="32">
+							<span id="studentNameTop" class="d-none d-lg-inline small">Student</span>
+						</a>
+						<ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarDropdown">
+							<li><a class="dropdown-item" href="/student/profile"><i class="fas fa-user me-2"></i>My Profile</a></li>
+							<li><hr class="dropdown-divider"></li>
+							<li><a class="dropdown-item text-danger logout-action" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
 
-    <div class="d-flex" id="wrapper">
-        <!-- Sidebar -->
-        <div class="bg-white" id="sidebar-wrapper">
-            <div class="sidebar-heading">Menu</div>
-            <div class="list-group list-group-flush">
-                <a href="/student/dashboard" class="list-group-item list-group-item-action">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-                <a href="/student/profile" class="list-group-item list-group-item-action">
-                    <i class="fas fa-id-card"></i> My Profile
-                </a>
-                <a href="/student/attendance" class="list-group-item list-group-item-action">
-                    <i class="fas fa-calendar-check"></i> My Attendance
-                </a>
-                <a href="/student/analysis" class="list-group-item list-group-item-action active">
-                    <i class="fas fa-chart-column"></i> Analysis
-                </a>
-                <a href="/student/timetable" class="list-group-item list-group-item-action">
-                    <i class="fas fa-table"></i> Timetable
-                </a>
-                <a href="/student/history" class="list-group-item list-group-item-action">
-                    <i class="fas fa-history"></i> Attendance History
-                </a>
-                <a href="/student/reports" class="list-group-item list-group-item-action">
-                    <i class="fas fa-file-alt"></i> Reports
-                </a>
-                <div class="sidebar-heading mt-3">Help</div>
-                <a href="#" class="list-group-item list-group-item-action">
-                    <i class="fas fa-question-circle"></i> Support
-                </a>
-            </div>
-        </div>
+	<div id="wrapper">
+		<div id="sidebar-wrapper">
+			<div class="sidebar-heading">Menu</div>
+			<div class="list-group list-group-flush">
+				<a href="/student/dashboard" class="list-group-item list-group-item-action">
+					<i class="fas fa-tachometer-alt"></i> Dashboard
+				</a>
+				<a href="/student/profile" class="list-group-item list-group-item-action">
+					<i class="fas fa-id-card"></i> My Profile
+				</a>
+				<a href="/student/attendance" class="list-group-item list-group-item-action">
+					<i class="fas fa-calendar-check"></i> My Attendance
+				</a>
+				<a href="/student/analysis" class="list-group-item list-group-item-action active">
+					<i class="fas fa-chart-column"></i> Analysis
+				</a>
+				<a href="/student/timetable" class="list-group-item list-group-item-action">
+					<i class="fas fa-table"></i> Timetable
+				</a>
+				<a href="/student/history" class="list-group-item list-group-item-action">
+					<i class="fas fa-history"></i> Attendance History
+				</a>
+				<a href="/student/reports" class="list-group-item list-group-item-action">
+					<i class="fas fa-file-alt"></i> Reports
+				</a>
+			</div>
+		</div>
 
-        <!-- Page Content -->
-        <div id="page-content-wrapper">
-            <div class="container-fluid px-4 py-4">
+		<div id="page-content-wrapper">
+			<div class="container-fluid px-4 py-4">
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<div class="text-white">
+						<h2 class="h4 mb-0 fw-bold">Analysis</h2>
+						<p class="mb-0 small opacity-75">Insights across your attendance</p>
+					</div>
+					<div class="d-flex align-items-center gap-2">
+						<span id="analysisOverallStatusBadge" class="badge bg-secondary">—</span>
+						<span id="analysisOverallPctText" class="text-white small">—%</span>
+					</div>
+				</div>
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h3 class="fw-bold text-white mb-0">Attendance Analysis</h3>
-                        <div class="text-white-50 small">Filter by subject and date range to make decisions fast.</div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-white-50 small">Overall:</span>
-                        <span id="analysisOverallPctText" class="text-white fw-bold">—%</span>
-                        <span id="analysisOverallStatusBadge" class="badge bg-secondary">—</span>
-                    </div>
-                </div>
+				<div class="card-academic mb-4">
+					<div class="card-academic-header">
+						<span><i class="fas fa-sliders me-2"></i>Filters</span>
+						<span id="analysisFilterSummary" class="small text-muted">No filters applied</span>
+					</div>
+					<div class="p-3">
+						<div class="row g-3 align-items-end">
+							<div class="col-md-4">
+								<label class="form-label">Subject</label>
+								<select id="analysisSubjectFilter" class="form-select">
+									<option value="">All Subjects</option>
+								</select>
+							</div>
+							<div class="col-md-3">
+								<label class="form-label">From</label>
+								<input id="analysisFromDate" type="date" class="form-control" />
+							</div>
+							<div class="col-md-3">
+								<label class="form-label">To</label>
+								<input id="analysisToDate" type="date" class="form-control" />
+							</div>
+							<div class="col-md-2 d-grid">
+								<button id="analysisApplyBtn" class="btn btn-action" type="button">
+									<i class="fas fa-filter me-2"></i>Apply
+								</button>
+							</div>
+							<div class="col-md-2 d-grid">
+								<button id="analysisResetBtn" class="btn btn-outline-light" type="button">Reset</button>
+							</div>
+						</div>
+					</div>
+				</div>
 
-                <!-- Filters -->
-                <div class="card-academic p-4 mb-4">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Subject</label>
-                            <select id="analysisSubjectFilter" class="form-select">
-                                <option value="">All Subjects</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold small text-muted text-uppercase">From Date</label>
-                            <input id="analysisFromDate" type="date" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold small text-muted text-uppercase">To Date</label>
-                            <input id="analysisToDate" type="date" class="form-control">
-                        </div>
-                        <div class="col-md-2 d-grid gap-2">
-                            <button id="analysisApplyBtn" class="btn btn-primary fw-bold"><i class="fas fa-filter me-2"></i>Apply</button>
-                            <button id="analysisResetBtn" class="btn btn-outline-secondary fw-bold"><i class="fas fa-rotate-left me-2"></i>Reset</button>
-                        </div>
-                    </div>
-                    <div class="mt-3 text-muted small" id="analysisFilterSummary">Showing all data</div>
-                </div>
+				<div class="row g-4">
+					<div class="col-lg-4">
+						<div class="card-academic p-3 h-100">
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<div class="fw-bold text-white">Overall</div>
+								<div class="small text-muted">Donut</div>
+							</div>
+							<div style="height: 260px;">
+								<canvas id="analysisOverallDonutChart"></canvas>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-8">
+						<div class="card-academic p-3 h-100">
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<div class="fw-bold text-white">Subject Comparison</div>
+								<div class="small text-muted">Radar</div>
+							</div>
+							<div style="height: 260px;">
+								<canvas id="analysisSubjectRadarChart"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
 
-                <!-- Charts -->
-                <div class="row g-4">
-                    <div class="col-lg-4">
-                        <div class="card-academic p-4 h-100">
-                            <div class="fw-bold small text-muted text-uppercase mb-2">Overall</div>
-                            <div style="height: 280px;">
-                                <canvas id="analysisOverallDonutChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-8">
-                        <div class="card-academic p-4 h-100">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div class="fw-bold small text-muted text-uppercase">Subject Performance (Radar)</div>
-                                <div class="text-muted small">Higher is better</div>
-                            </div>
-                            <div class="mt-2" style="height: 280px;">
-                                <canvas id="analysisSubjectRadarChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+				<div class="card-academic mt-4 p-3">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div class="fw-bold text-white">Recent Trend</div>
+						<div class="small text-muted">Avg: <span id="analysisRecentAvgText">—</span></div>
+					</div>
+					<div style="height: 280px;">
+						<canvas id="analysisRecentTrendChart"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-                <div class="row g-4 mt-1">
-                    <div class="col-12">
-                        <div class="card-academic p-4">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div class="fw-bold small text-muted text-uppercase">Recent Trend (Last 5 Lectures)</div>
-                                <div class="text-muted small" id="analysisRecentAvgText">—</div>
-                            </div>
-                            <div class="mt-2" style="height: 220px;">
-                                <canvas id="analysisRecentTrendChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="{{ url_for('static', filename='JS/api.js') }}"></script>
-    <script src="{{ url_for('static', filename='JS/logout.js') }}"></script>
-    <script src="{{ url_for('static', filename='JS/student_analysis.js') }}"></script>
-    <script>
-        document.getElementById('menu-toggle').addEventListener('click', function() {
-            document.getElementById('wrapper').classList.toggle('toggled');
-        });
-    </script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="{{ url_for('static', filename='JS/api.js') }}"></script>
+	<script src="{{ url_for('static', filename='JS/student_layout.js') }}"></script>
+	<script src="{{ url_for('static', filename='JS/glass_ui.js') }}"></script>
+	<script src="{{ url_for('static', filename='JS/logout.js') }}"></script>
+	<script src="{{ url_for('static', filename='JS/student_analysis.js') }}"></script>
 </body>
 </html>

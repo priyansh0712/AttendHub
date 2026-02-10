@@ -76,11 +76,22 @@ if (document.getElementById('adminSignupForm')) {
 
         try {
             await apiPostJson(`${API_BASE_URL}/admin/signup`, payload);
-            alert('Account created successfully! Please login.');
+            if (window.showToast) {
+                window.showToast({ type: 'success', title: 'Account Created', message: 'Account created successfully! Please login.' });
+            }
             window.location.href = '/admin/login';
         } catch (error) {
             console.error('Error:', error);
-            alert(getApiErrorMessage(error, 'Signup failed. Please try again.'));
+            const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Signup failed. Please try again.')) || (error && error.message) || 'Signup failed. Please try again.';
+
+            // Always show inline error so it's visible even if toast is missed.
+            // Common case: duplicate email.
+            showError(email, msg);
+            email.focus();
+
+            if (window.showToast) {
+                window.showToast({ type: 'error', title: 'Signup Failed', message: msg });
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -134,11 +145,16 @@ if (document.getElementById('loginForm') && window.location.pathname.includes('/
 
         try {
             await apiPostJson(`${API_BASE_URL}/admin/login`, payload);
-            alert('Login successful!');
+            if (window.showToast) {
+                window.showToast({ type: 'success', title: 'Login Successful', message: 'Welcome back.' });
+            }
             window.location.href = '/admin/dashboard';
         } catch (error) {
             console.error('Error:', error);
-            alert(getApiErrorMessage(error, 'Login failed. Please check your credentials.'));
+            if (window.showToast) {
+                const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
+                window.showToast({ type: 'error', title: 'Invalid Login', message: msg });
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -186,11 +202,16 @@ if (document.getElementById('loginForm') && window.location.pathname.includes('/
 
         try {
             await apiPostJson(`${API_BASE_URL}/faculty/login`, payload);
-            alert('Login successful!');
+            if (window.showToast) {
+                window.showToast({ type: 'success', title: 'Login Successful', message: 'Welcome back.' });
+            }
             window.location.href = '/faculty/dashboard';
         } catch (error) {
             console.error('Error:', error);
-            alert(getApiErrorMessage(error, 'Login failed. Please check your credentials.'));
+            if (window.showToast) {
+                const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
+                window.showToast({ type: 'error', title: 'Invalid Login', message: msg });
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -238,11 +259,16 @@ if (document.getElementById('loginForm') && window.location.pathname.includes('/
 
         try {
             await apiPostJson(`${API_BASE_URL}/student/login`, payload);
-            alert('Login successful!');
+            if (window.showToast) {
+                window.showToast({ type: 'success', title: 'Login Successful', message: 'Welcome back.' });
+            }
             window.location.href = '/student/dashboard';
         } catch (error) {
             console.error('Error:', error);
-            alert(getApiErrorMessage(error, 'Login failed. Please check your credentials.'));
+            if (window.showToast) {
+                const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
+                window.showToast({ type: 'error', title: 'Invalid Login', message: msg });
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -261,15 +287,16 @@ function showError(inputElement, message) {
     const errorDiv = inputElement.nextElementSibling;
     if (errorDiv && errorDiv.classList.contains('error-message')) {
         errorDiv.textContent = message;
-        errorDiv.style.color = '#dc3545';
-        errorDiv.style.fontSize = '0.875rem';
-        errorDiv.style.marginTop = '0.25rem';
+        errorDiv.classList.add('show');
     }
 }
 
 function clearValidationErrors() {
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    document.querySelectorAll('.error-message').forEach(el => {
+        el.textContent = '';
+        el.classList.remove('show');
+    });
 }
 
 function showSuccess(inputElement) {

@@ -129,7 +129,7 @@ function renderTable(data) {
                 <span class="d-block fw-bold text-dark">${item.subject}</span>
             </td>
             <td>${start} - ${end}</td>
-            <td class="text-center"><span class="badge bg-light text-dark border">${present} / ${total}</span></td>
+            <td class="text-center"><span class="badge bg-primary">${present} / ${total}</span></td>
             <td>${statusBadge}</td>
             <td class="text-end">
                 <button class="btn btn-sm btn-link text-decoration-none" data-lecture-id="${item.lecture_id}">View</button>

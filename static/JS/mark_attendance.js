@@ -8,6 +8,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const closePreviewBtn = document.getElementById('closePreviewPanelBtn');
     if (closePreviewBtn) closePreviewBtn.addEventListener('click', hidePanels);
 
+    const submitBtn = document.getElementById('submitAttendanceBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', async () => {
+            if (!selectedLectureId) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast({
+                        type: 'warning',
+                        title: 'Select Lecture',
+                        message: 'Please select a lecture to mark attendance.',
+                    });
+                }
+                return;
+            }
+
+            const ok = typeof window.glassConfirm === 'function'
+                ? await window.glassConfirm({
+                    title: 'Confirm Submission',
+                    message: 'Finalize attendance for this lecture? This action cannot be undone.',
+                    confirmText: 'Submit',
+                    cancelText: 'Cancel',
+                    tone: 'danger',
+                })
+                : true;
+
+            if (!ok) return;
+            await submitAttendance();
+        });
+    }
+
     loadTodayLectures();
 });
 
@@ -196,7 +225,9 @@ function renderPreview(rows) {
 
 async function submitAttendance() {
     if (!selectedLectureId) {
-        alert('Please select a lecture to mark attendance.');
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'warning', title: 'Select Lecture', message: 'Please select a lecture to mark attendance.' });
+        }
         return;
     }
 
@@ -237,12 +268,20 @@ async function submitAttendance() {
             body: JSON.stringify(payload)
         });
         const countText = (data && typeof data.count !== 'undefined') ? ` (${data.count} processed)` : '';
-        alert(`Success: ${(responsePayload && responsePayload.message) || 'Attendance submitted'}${countText}`);
+        if (typeof window.showToast === 'function') {
+            window.showToast({
+                type: 'success',
+                title: 'Submitted',
+                message: `${(responsePayload && responsePayload.message) || 'Attendance submitted'}${countText}`
+            });
+        }
         hidePanels();
         await loadTodayLectures();
     } catch (error) {
         console.error('Error:', error);
-        alert(getApiErrorMessage(error, 'Submission failed'));
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'error', title: 'Error', message: getApiErrorMessage(error, 'Submission failed') });
+        }
          if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Submit Attendance';

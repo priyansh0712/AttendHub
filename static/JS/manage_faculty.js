@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadFaculty();
 
+    function notify(type, message, title) {
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type, title: title || undefined, message });
+        } else {
+            console.warn(`[${type}] ${title ? title + ': ' : ''}${message}`);
+        }
+    }
+
     // Search / filter
     const facultySearchInput = document.getElementById('facultySearchInput');
     if (facultySearchInput) {
@@ -48,11 +56,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Additional Validation
             if (!isEdit) {
                 if (password.length < 6) {
-                    alert("Password must be at least 6 characters long.");
+                    notify('warning', 'Password must be at least 6 characters long.', 'Validation');
                     return;
                 }
             } else if (password && password.length < 6) {
-                alert("Password must be at least 6 characters long.");
+                notify('warning', 'Password must be at least 6 characters long.', 'Validation');
                 return;
             }
 
@@ -86,11 +94,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (facultyIdEl) facultyIdEl.value = '';
                 resetFacultyFormMode();
 
-                alert(isEdit ? 'Faculty updated successfully!' : 'Faculty created successfully!');
+                notify('success', isEdit ? 'Faculty updated successfully!' : 'Faculty created successfully!', 'Success');
                 loadFaculty(); // Refresh table
             } catch (error) {
                 console.error('Error:', error);
-                alert(getApiErrorMessage(error, isEdit ? 'Failed to update faculty' : 'Failed to create faculty'));
+                notify('error', getApiErrorMessage(error, isEdit ? 'Failed to update faculty' : 'Failed to create faculty'), 'Error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
@@ -119,14 +127,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const newStatus = !Boolean(faculty.is_active);
                 const action = newStatus ? 'Activate' : 'Deactivate';
-                if (!confirm(`${action} this faculty account?`)) return;
+                if (typeof window.glassConfirm === 'function') {
+                    const ok = await window.glassConfirm({
+                        type: newStatus ? 'warning' : 'danger',
+                        title: `${action} Faculty`,
+                        message: `${action} this faculty account?`,
+                        confirmText: action,
+                        cancelText: 'Cancel'
+                    });
+                    if (!ok) return;
+                }
 
                 try {
                     await apiPostJson('/api/admin/faculty/status', { faculty_id: id, is_active: newStatus });
                     loadFaculty();
                 } catch (error) {
                     console.error('Error:', error);
-                    alert(getApiErrorMessage(error, `Failed to ${action.toLowerCase()} faculty`));
+                    notify('error', getApiErrorMessage(error, `Failed to ${action.toLowerCase()} faculty`), 'Error');
                 }
             }
         });

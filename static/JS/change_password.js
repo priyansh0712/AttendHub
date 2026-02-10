@@ -1,7 +1,10 @@
 (function () {
-    function showToast(message) {
-        // Keep it simple: alert is consistent across existing code.
-        alert(message);
+    function notify(type, message, title) {
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type, title: title || undefined, message: String(message || '') });
+        } else {
+            console.warn(`[${type}] ${title ? title + ': ' : ''}${message}`);
+        }
     }
 
     function getModal() {
@@ -29,9 +32,9 @@
         const newPassword = next?.value || '';
         const confirmPassword = confirm?.value || '';
 
-        if (!currentPassword) return showToast('Current password is required');
-        if (!newPassword || newPassword.length < 6) return showToast('New password must be at least 6 characters');
-        if (newPassword !== confirmPassword) return showToast('New passwords do not match');
+        if (!currentPassword) return notify('warning', 'Current password is required', 'Validation');
+        if (!newPassword || newPassword.length < 6) return notify('warning', 'New password must be at least 6 characters', 'Validation');
+        if (newPassword !== confirmPassword) return notify('warning', 'New passwords do not match', 'Validation');
 
         if (btn) {
             btn.disabled = true;
@@ -44,11 +47,11 @@
                 current_password: currentPassword,
                 new_password: newPassword,
             });
-            showToast('Password updated successfully');
+            notify('success', 'Password updated successfully', 'Success');
             clearFields();
             getModal()?.hide();
         } catch (err) {
-            showToast(window.getApiErrorMessage(err, 'Failed to change password'));
+            notify('error', window.getApiErrorMessage(err, 'Failed to change password'), 'Error');
         } finally {
             if (btn) {
                 btn.disabled = false;

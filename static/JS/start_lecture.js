@@ -109,10 +109,18 @@ async function startLecture() {
         // 2. Update UI
         setLectureActiveUI();
 
-        alert('Lecture started successfully! Student attendance is now enabled.');
+        if (typeof window.showToast === 'function') {
+            window.showToast({
+                type: 'success',
+                title: 'Lecture Started',
+                message: 'Student attendance is now enabled.'
+            });
+        }
     } catch (error) {
         console.error('Error starting lecture:', error);
-        alert(getApiErrorMessage(error, 'Failed to start lecture'));
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'error', title: 'Error', message: getApiErrorMessage(error, 'Failed to start lecture') });
+        }
         btn.disabled = false;
         btn.innerHTML = originalContent;
     }
@@ -140,10 +148,14 @@ async function endLecture() {
 
         // Move to next lecture slot (if any)
         await loadTodaysLecture();
-        alert('Lecture session ended.');
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'success', title: 'Session Ended', message: 'Lecture session ended.' });
+        }
     } catch (error) {
         console.error('Error ending lecture:', error);
-        alert(getApiErrorMessage(error, 'Failed to end lecture'));
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'error', title: 'Error', message: getApiErrorMessage(error, 'Failed to end lecture') });
+        }
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = originalContent;

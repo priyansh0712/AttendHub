@@ -6,7 +6,8 @@ from exceptions.custom_exceptions import (
     AuthenticationError, 
     InvalidCredentialsError, 
     ValidationError, 
-    DuplicateEntryError
+    DuplicateEntryError,
+    DuplicateRecordError
 )
 
 class AuthService:
@@ -103,6 +104,15 @@ class AuthService:
         Registers a new University and its Admin.
         """
         self._validate_input(data, {'university_name', 'location', 'admin_name', 'email', 'password'})
+
+        email = (data.get('email') or '').strip().lower()
+        if not email:
+            raise ValidationError('Email is required')
+
+        # Prevent duplicates before creating a university record
+        existing_admin = self.admin_repo.find_by_email(email)
+        if existing_admin:
+            raise DuplicateRecordError('Admin email already exists')
         
         # 1. Create University
         univ_id = self.university_repo.create_university(
@@ -117,7 +127,7 @@ class AuthService:
         admin_id = self.admin_repo.create_admin(
             univ_id, 
             data['admin_name'], 
-            data['email'], 
+            email, 
             hashed_pw
         )
         

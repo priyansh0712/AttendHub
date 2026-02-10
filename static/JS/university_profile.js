@@ -129,9 +129,13 @@
         try {
             await window.apiPostJson('/api/admin/university/profile/update', payload);
             await loadProfile();
-            alert('University profile saved');
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'success', title: 'Saved', message: 'University profile saved' });
+            }
         } catch (err) {
-            alert(window.getApiErrorMessage(err, 'Failed to save profile'));
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'error', title: 'Error', message: window.getApiErrorMessage(err, 'Failed to save profile') });
+            }
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -143,7 +147,9 @@
     document.addEventListener('DOMContentLoaded', function () {
         loadProfile().catch((err) => {
             console.error(err);
-            alert(window.getApiErrorMessage(err, 'Failed to load university profile'));
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'error', title: 'Error', message: window.getApiErrorMessage(err, 'Failed to load university profile') });
+            }
         });
 
         const saveBtn = document.getElementById('saveUniversityProfileBtn');

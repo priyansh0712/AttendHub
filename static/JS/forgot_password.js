@@ -86,7 +86,13 @@
             const token = data?.token;
             const expiresIn = data?.expires_in_seconds;
 
-            alert(res?.message || data?.message || 'Done');
+            if (typeof window.showToast === 'function') {
+                window.showToast({
+                    type: 'success',
+                    title: 'Done',
+                    message: String(res?.message || data?.message || 'Done')
+                });
+            }
 
             if (token) {
                 if (tokenValue) tokenValue.value = token;
@@ -99,7 +105,9 @@
                 if (rpToken && !rpToken.value) rpToken.value = token;
             }
         } catch (err) {
-            alert(window.getApiErrorMessage(err, 'Failed to generate token'));
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'error', title: 'Error', message: window.getApiErrorMessage(err, 'Failed to generate token') });
+            }
         } finally {
             setLoading(submitBtn, false);
         }
@@ -139,12 +147,16 @@
                 token,
                 new_password: newPassword,
             });
-            alert('Password reset successful. Please login.');
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'success', title: 'Password Reset', message: 'Password reset successful. Please login.' });
+            }
 
             // Best effort redirect by role in token is unknown on frontend; send to home.
             window.location.href = '/';
         } catch (err) {
-            alert(window.getApiErrorMessage(err, 'Failed to reset password'));
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'error', title: 'Error', message: window.getApiErrorMessage(err, 'Failed to reset password') });
+            }
         } finally {
             setLoading(submitBtn, false);
         }

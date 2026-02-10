@@ -147,7 +147,9 @@ if (document.getElementById('adminSignupForm')) {
         }
 
         if (isValid) {
-            alert('Form validation successful! Backend integration pending.');
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'success', title: 'Validated', message: 'Form validation successful! Backend integration pending.' });
+            }
             // form.reset();
         }
     });
@@ -203,7 +205,9 @@ if (document.getElementById('loginForm')) {
         }
 
         if (isValid) {
-            alert('Login validation successful! Backend authentication pending.');
+            if (typeof window.showToast === 'function') {
+                window.showToast({ type: 'success', title: 'Validated', message: 'Login validation successful! Backend authentication pending.' });
+            }
             // form.reset();
         }
     });
