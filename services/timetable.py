@@ -85,7 +85,7 @@ class TimetableService:
             raise RecordNotFoundError("Timetable entry not found")
 
         if self.timetable_repo.has_existing_lectures(timetable_id):
-            raise ValidationError("Timetable cannot be edited because lectures already exist")
+            raise ValidationError("Cannot edit timetable with existing lecture records")
 
         subject = str((data or {}).get('subject') or '').strip()
         department = str((data or {}).get('department') or '').strip()
@@ -117,7 +117,7 @@ class TimetableService:
         if start_time >= end_time:
             raise ValidationError("start_time must be earlier than end_time")
 
-        if self.timetable_repo.has_faculty_time_conflict(
+        if self.timetable_repo.has_time_conflict(
             faculty_id=faculty_id,
             day=day,
             start_time=start_time,

@@ -114,16 +114,17 @@ class TimetableRepository:
         try:
             conn = get_connection()
             cursor = conn.cursor()
-            query = "SELECT 1 FROM lectures WHERE timetable_id = %s LIMIT 1"
+            query = "SELECT COUNT(*) FROM lectures WHERE timetable_id = %s"
             cursor.execute(query, (timetable_id,))
-            return cursor.fetchone() is not None
+            row = cursor.fetchone()
+            return (row[0] if row else 0) > 0
         except Error as e:
             raise DatabaseError(f"Failed to check existing lectures: {e}")
         finally:
             close_connection(conn)
 
     @staticmethod
-    def has_faculty_time_conflict(faculty_id, day, start_time, end_time, exclude_id=None):
+    def has_time_conflict(faculty_id, day, start_time, end_time, exclude_id=None):
         """Returns True if another timetable row overlaps for same faculty/day."""
         conn = None
         try:
@@ -146,6 +147,17 @@ class TimetableRepository:
             raise DatabaseError(f"Failed to check faculty time conflict: {e}")
         finally:
             close_connection(conn)
+
+    @staticmethod
+    def has_faculty_time_conflict(faculty_id, day, start_time, end_time, exclude_id=None):
+        """Backward-compatible alias."""
+        return TimetableRepository.has_time_conflict(
+            faculty_id=faculty_id,
+            day=day,
+            start_time=start_time,
+            end_time=end_time,
+            exclude_id=exclude_id,
+        )
 
     @staticmethod
     def find_by_faculty(faculty_id):

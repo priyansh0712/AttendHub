@@ -1,12 +1,21 @@
 (function () {
     let allStudents = [];
+    let eventsWired = false;
+
+    function notify(type, message, title) {
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type, title: title || undefined, message });
+            return;
+        }
+        console.warn(`[${type}] ${title ? `${title}: ` : ''}${message}`);
+    }
 
     function initials(name) {
         const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
         const first = parts[0]?.[0] || '';
         const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
         const out = (first + last).toUpperCase();
-        return out || '—';
+        return out || '?';
     }
 
     function statusBadge(isActive) {
@@ -34,8 +43,8 @@
         const modalEmail = document.getElementById('studentModalEmail');
 
         if (modalInitials) modalInitials.textContent = initials(student?.name);
-        if (modalName) modalName.textContent = student?.name || '—';
-        if (modalIdLine) modalIdLine.textContent = `Student ID: ${student?.student_id ?? '—'}`;
+        if (modalName) modalName.textContent = student?.name || '-';
+        if (modalIdLine) modalIdLine.textContent = `Student ID: ${student?.student_id ?? '-'}`;
 
         const badge = statusBadge(student?.is_active);
         if (modalStatus) {
@@ -43,10 +52,10 @@
             modalStatus.textContent = badge.label;
         }
 
-        if (modalEnrollment) modalEnrollment.textContent = student?.enrollment_no || '—';
-        if (modalDepartment) modalDepartment.textContent = student?.department || '—';
-        if (modalSemester) modalSemester.textContent = student?.semester != null ? `Semester ${student.semester}` : '—';
-        if (modalEmail) modalEmail.textContent = student?.email || '—';
+        if (modalEnrollment) modalEnrollment.textContent = student?.enrollment_no || '-';
+        if (modalDepartment) modalDepartment.textContent = student?.department || '-';
+        if (modalSemester) modalSemester.textContent = student?.semester != null ? `Semester ${student.semester}` : '-';
+        if (modalEmail) modalEmail.textContent = student?.email || '-';
     }
 
     function getFilters() {
@@ -98,14 +107,14 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3 border" style="width: 35px; height: 35px;">
-                                    <span class="small fw-bold text-muted">${escapeHtml(initials(s?.name))}</span>
+                                    <span class="small fw-bold text-dark">${escapeHtml(initials(s?.name))}</span>
                                 </div>
-                                <span class="fw-medium">${escapeHtml(s?.name || '—')}</span>
+                                <span class="fw-medium">${escapeHtml(s?.name || '-')}</span>
                             </div>
                         </td>
-                        <td>${escapeHtml(s?.enrollment_no || '—')}</td>
-                        <td>${escapeHtml(s?.department || '—')}</td>
-                        <td>${s?.semester != null ? `Sem ${escapeHtml(s.semester)}` : '—'}</td>
+                        <td>${escapeHtml(s?.enrollment_no || '-')}</td>
+                        <td>${escapeHtml(s?.department || '-')}</td>
+                        <td>${s?.semester != null ? `Sem ${escapeHtml(s.semester)}` : '-'}</td>
                         <td><span class="badge ${badge.cls}">${badge.label}</span></td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-outline-primary" data-student-id="${escapeHtml(s?.student_id)}" data-bs-toggle="modal" data-bs-target="#studentModal">
@@ -136,9 +145,14 @@
     }
 
     function wireEvents() {
+        if (eventsWired) return;
+        eventsWired = true;
+
         const deptSelect = document.getElementById('departmentFilter');
         const semSelect = document.getElementById('semesterFilter');
         const search = document.getElementById('studentSearchInput');
+        const addStudentForm = document.getElementById('addStudentForm');
+        const addStudentModalEl = document.getElementById('addStudentModal');
 
         const rerender = () => renderTable(applyFilters());
 
@@ -153,6 +167,68 @@
             const studentId = btn.getAttribute('data-student-id');
             const student = allStudents.find((s) => String(s?.student_id) === String(studentId));
             setModal(student);
+        });
+
+        addStudentForm?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!addStudentForm.checkValidity()) {
+                addStudentForm.classList.add('was-validated');
+                return;
+            }
+
+            const name = document.getElementById('studentName')?.value?.trim();
+            const enrollmentNo = document.getElementById('enrollmentNo')?.value?.trim();
+            const email = document.getElementById('studentEmail')?.value?.trim();
+            const department = document.getElementById('department')?.value;
+            const semesterRaw = document.getElementById('semester')?.value;
+            const password = document.getElementById('studentPassword')?.value || '';
+            const semester = parseInt(semesterRaw, 10);
+
+            if (!Number.isInteger(semester) || semester < 1) {
+                notify('warning', 'Please select a valid semester', 'Validation');
+                return;
+            }
+
+            if (password.length < 6) {
+                notify('warning', 'Password must be at least 6 characters', 'Validation');
+                return;
+            }
+
+            const payload = {
+                name,
+                enrollment_no: enrollmentNo,
+                email,
+                department,
+                semester,
+                password
+            };
+
+            const submitBtn = addStudentForm.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            }
+
+            try {
+                await window.apiPostJson('/api/faculty/student/create', payload);
+
+                addStudentForm.reset();
+                addStudentForm.classList.remove('was-validated');
+                const addModal = addStudentModalEl ? bootstrap.Modal.getOrCreateInstance(addStudentModalEl) : null;
+                addModal?.hide();
+
+                notify('success', 'Student added successfully', 'Success');
+                await loadStudents();
+            } catch (err) {
+                notify('error', window.getApiErrorMessage(err, 'Failed to add student'), 'Error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+            }
         });
     }
 

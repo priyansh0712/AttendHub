@@ -166,7 +166,8 @@ admin_controller = AdminController(
 faculty_controller = FacultyController(
     lecture_service=lecture_service,
     attendance_service=attendance_service,
-    faculty_service=faculty_mgmt_service
+    faculty_service=faculty_mgmt_service,
+    student_service=student_mgmt_service
 )
 
 student_controller = StudentController(
@@ -231,6 +232,7 @@ faculty_bp.add_url_rule('/lecture/end', 'end_lecture', faculty_controller.end_le
 faculty_bp.add_url_rule('/schedule/today', 'get_schedule', faculty_controller.get_schedule, methods=['GET'])
 faculty_bp.add_url_rule('/schedule/weekly', 'get_weekly_schedule', faculty_controller.get_weekly_schedule, methods=['GET'])
 faculty_bp.add_url_rule('/students/list', 'list_students', faculty_controller.list_students, methods=['GET'])
+faculty_bp.add_url_rule('/student/create', 'create_student', faculty_controller.create_student, methods=['POST'])
 faculty_bp.add_url_rule('/attendance/mark', 'mark_attendance', faculty_controller.mark_attendance, methods=['POST'])
 faculty_bp.add_url_rule('/attendance/history', 'get_history', faculty_controller.get_attendance_history, methods=['GET'])
 faculty_bp.add_url_rule('/attendance/history/export', 'export_history', faculty_controller.export_attendance_history, methods=['GET'])

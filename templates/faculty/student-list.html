@@ -107,6 +107,9 @@
                         <h2 class="h4 mb-0 fw-bold">Student List</h2>
                         <p class="mb-0 small opacity-75">Students in your university</p>
                     </div>
+                    <button type="button" class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                        <i class="fas fa-plus-circle me-2"></i>Add Student
+                    </button>
                 </div>
 
                 <!-- Filter Section -->
@@ -166,34 +169,111 @@
                 <div class="modal-body p-4">
                     <div class="text-center mb-4">
                         <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-2 border" style="width: 80px; height: 80px;">
-                            <span class="h2 fw-bold text-muted mb-0" id="studentModalInitials">—</span>
+                            <span class="h2 fw-bold text-dark mb-0" id="studentModalInitials">?</span>
                         </div>
-                        <h5 class="fw-bold mb-1" id="studentModalName">—</h5>
-                        <p class="text-muted small mb-1" id="studentModalIdLine">—</p>
-                        <span class="badge bg-secondary" id="studentModalStatus">—</span>
+                        <h5 class="fw-bold mb-1" id="studentModalName">-</h5>
+                        <p class="text-muted small mb-1" id="studentModalIdLine">-</p>
+                        <span class="badge bg-secondary" id="studentModalStatus">-</span>
                     </div>
                     
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="small text-muted text-uppercase fw-bold">Enrollment No</label>
-                            <div class="fw-medium" id="studentModalEnrollment">—</div>
+                            <div class="fw-medium" id="studentModalEnrollment">-</div>
                         </div>
                         <div class="col-6">
                             <label class="small text-muted text-uppercase fw-bold">Department</label>
-                            <div class="fw-medium" id="studentModalDepartment">—</div>
+                            <div class="fw-medium" id="studentModalDepartment">-</div>
                         </div>
                         <div class="col-6">
                             <label class="small text-muted text-uppercase fw-bold">Semester</label>
-                            <div class="fw-medium" id="studentModalSemester">—</div>
+                            <div class="fw-medium" id="studentModalSemester">-</div>
                         </div>
                         <div class="col-6">
                             <label class="small text-muted text-uppercase fw-bold">Contact Email</label>
-                            <div class="fw-medium text-truncate" id="studentModalEmail">—</div>
+                            <div class="fw-medium text-truncate" id="studentModalEmail">-</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-primary"></i>Add New Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="addStudentForm" novalidate>
+                        <div class="mb-3">
+                            <label for="studentName" class="form-label small fw-bold text-muted">Full Name</label>
+                            <input type="text" class="form-control" id="studentName" placeholder="e.g. Aryan Sharma" required>
+                            <div class="invalid-feedback">Name is required</div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="enrollmentNo" class="form-label small fw-bold text-muted">Enrollment No</label>
+                                <input type="text" class="form-control font-monospace" id="enrollmentNo" placeholder="2024CS..." required>
+                                <div class="invalid-feedback">Enrollment No is required</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="studentEmail" class="form-label small fw-bold text-muted">Email Address</label>
+                                <input type="email" class="form-control" id="studentEmail" placeholder="student@univ.edu" required>
+                                <div class="invalid-feedback">Valid email is required</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="department" class="form-label small fw-bold text-muted">Department</label>
+                                <select class="form-select" id="department" required>
+                                    <option value="" selected disabled>Choose...</option>
+                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="Mechanical Eng.">Mechanical Eng.</option>
+                                    <option value="Civil Eng.">Civil Eng.</option>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Physics">Physics</option>
+                                </select>
+                                <div class="invalid-feedback">Select a department</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="semester" class="form-label small fw-bold text-muted">Semester</label>
+                                <select class="form-select" id="semester" required>
+                                    <option value="" selected disabled>Choose...</option>
+                                    <option>1st Sem</option>
+                                    <option>2nd Sem</option>
+                                    <option>3rd Sem</option>
+                                    <option>4th Sem</option>
+                                    <option>5th Sem</option>
+                                    <option>6th Sem</option>
+                                    <option>7th Sem</option>
+                                    <option>8th Sem</option>
+                                </select>
+                                <div class="invalid-feedback">Select a semester</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="studentPassword" class="form-label small fw-bold text-muted">Password</label>
+                            <input type="password" class="form-control" id="studentPassword" placeholder="Initial Password (min 6 chars)" required minlength="6">
+                            <div class="invalid-feedback">Password must be at least 6 characters</div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary fw-bold py-2">
+                                <i class="fas fa-save me-2"></i>Save Student
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

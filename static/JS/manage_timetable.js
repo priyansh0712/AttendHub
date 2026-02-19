@@ -241,7 +241,7 @@ async function loadTimetable() {
         tbody.innerHTML = '';
 
         if (!Array.isArray(timetableData) || timetableData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No schedule available. Upload a CSV to get started.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No schedule available. Upload a CSV to get started.</td></tr>';
             return;
         }
 
@@ -250,12 +250,10 @@ async function loadTimetable() {
             const startTime = item.start_time ? String(item.start_time).substring(0, 5) : '';
             const endTime = item.end_time ? String(item.end_time).substring(0, 5) : '';
             const hasLectures = !!item.has_lectures;
-            const statusBadge = hasLectures
-                ? '<span class="badge bg-secondary">Locked</span>'
-                : '<span class="badge bg-success">Scheduled</span>';
+            const actionBtnClass = 'btn btn-sm btn-outline-secondary edit-btn';
             const actionBtn = hasLectures
-                ? `<button class="btn btn-sm btn-outline-secondary edit-btn" data-id="${item.timetable_id}" data-locked="1" title="Locked: lectures already exist">Edit</button>`
-                : `<button class="btn btn-sm btn-primary edit-btn" data-id="${item.timetable_id}" data-locked="0">Edit</button>`;
+                ? `<button class="${actionBtnClass}" style="min-width:84px;" data-id="${item.timetable_id}" data-locked="1" title="Locked: lectures already exist">Edit</button>`
+                : `<button class="${actionBtnClass}" style="min-width:84px;" data-id="${item.timetable_id}" data-locked="0">Edit</button>`;
 
             row.innerHTML = `
                 <td class="ps-4 text-start fw-bold text-muted">${escapeHtml(item.department || '-')}</td>
@@ -266,7 +264,6 @@ async function loadTimetable() {
                     <div class="fw-bold">${escapeHtml(item.subject || '')}</div>
                     <div class="small text-muted">${escapeHtml(item.faculty_name || '')}</div>
                 </td>
-                <td>${statusBadge}</td>
                 <td class="text-end pe-4">${actionBtn}</td>
             `;
             tbody.appendChild(row);
@@ -275,7 +272,7 @@ async function loadTimetable() {
         console.error('Failed to load timetable:', error);
         const tbody = document.getElementById('timetableTableBody');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Failed to load schedule. Please refresh.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Failed to load schedule. Please refresh.</td></tr>';
         }
     }
 }

@@ -20,7 +20,7 @@ class Config:
     
     ROLE_PERMISSIONS = {
         'admin': ('create_faculty', 'create_student', 'manage_timetable', 'view_reports'),
-        'faculty': ('start_lecture', 'mark_attendance', 'view_reports'),
+        'faculty': ('start_lecture', 'mark_attendance', 'create_student', 'view_reports'),
         'student': ('mark_self_attendance', 'view_own_attendance')
     }
     

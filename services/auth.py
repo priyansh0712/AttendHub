@@ -40,7 +40,7 @@ class AuthService:
         # Immutable Role-Permission Mapping (Tuple)
         self._role_permissions = (
             ('admin', ('manage_faculty', 'manage_students', 'view_reports', 'manage_timetable')),
-            ('faculty', ('mark_attendance', 'view_schedule', 'view_profile')),
+            ('faculty', ('mark_attendance', 'view_schedule', 'view_profile', 'create_student')),
             ('student', ('view_attendance', 'view_timetable'))
         )
 

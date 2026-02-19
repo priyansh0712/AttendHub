@@ -12,10 +12,18 @@ class FacultyController(BaseController):
     Controller for Faculty operations.
     Delegates to LectureService and AttendanceService.
     """
-    def __init__(self, lecture_service, attendance_service, faculty_service=None, analytics_service=None):
+    def __init__(
+        self,
+        lecture_service,
+        attendance_service,
+        faculty_service=None,
+        student_service=None,
+        analytics_service=None
+    ):
         self.lecture_service = lecture_service
         self.attendance_service = attendance_service
         self.faculty_service = faculty_service
+        self.student_service = student_service
         self.analytics_service = analytics_service
 
     def get_context(self):
@@ -240,6 +248,31 @@ class FacultyController(BaseController):
 
             students = self.attendance_service.student_repo.find_all_by_university(university_id)
             return self.success_response(data=students, message='Students list', status_code=200)
+        except Exception as e:
+            return self.handle_exception(e)
+
+    def create_student(self):
+        try:
+            faculty_id = session.get('user_id')
+            role = session.get('role')
+            university_id = session.get('university_id')
+            if not faculty_id or role != 'faculty' or not university_id:
+                raise AuthenticationError('Unauthorized')
+
+            if not self.student_service:
+                raise ValidationError('Student service unavailable')
+
+            data = request.get_json(silent=True) or {}
+            student_id = self.student_service.create_student(
+                university_id,
+                data.get('enrollment_no'),
+                data.get('name'),
+                data.get('department'),
+                data.get('semester', 1),
+                data.get('email'),
+                data.get('password')
+            )
+            return self.success_response(data={'student_id': student_id}, message='Student created', status_code=201)
         except Exception as e:
             return self.handle_exception(e)
 

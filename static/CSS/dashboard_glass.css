@@ -141,6 +141,15 @@ a{color: inherit;}
   color: rgba(7,10,16,0.92) !important;
 }
 
+/* Keep initials/icons visible inside light avatar chips in dark theme. */
+.rounded-circle.bg-light .text-muted{
+  color: rgba(7,10,16,0.72) !important;
+}
+.rounded-circle.bg-light .text-dark,
+.rounded-circle.bg-warning .text-dark{
+  color: rgba(7,10,16,0.92) !important;
+}
+
 /* Contrast fix: light table headers (commonly used inside view modals). */
 thead.bg-light,
 .table thead.bg-light{

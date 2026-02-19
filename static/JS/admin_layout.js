@@ -15,6 +15,37 @@
         el.textContent = text;
     }
 
+    function initialsFromName(name) {
+        const n = (name ?? '').toString().trim();
+        if (!n) return 'A';
+        const parts = n.split(/\s+/).filter(Boolean);
+        const first = parts[0]?.[0] || 'A';
+        const second = (parts.length > 1 ? parts[parts.length - 1]?.[0] : parts[0]?.[1]) || '';
+        return (first + second).toUpperCase();
+    }
+
+    function setAdminAvatar(name) {
+        const initials = initialsFromName(name);
+
+        const navbarAdminName = byId('navbarAdminName');
+        const navbarAvatar = navbarAdminName
+            ?.closest('a')
+            ?.querySelector('.rounded-circle');
+        if (navbarAvatar) {
+            navbarAvatar.innerHTML = `<span class="small fw-bold" style="color: rgba(7,10,16,0.92);">${initials}</span>`;
+            navbarAvatar.setAttribute('aria-label', `Admin avatar ${initials}`);
+        }
+
+        const sidebarAdminName = byId('sidebarAdminName');
+        const sidebarAvatar = sidebarAdminName
+            ?.closest('.mini-profile')
+            ?.querySelector('.who .avatar');
+        if (sidebarAvatar) {
+            sidebarAvatar.innerHTML = `<span class="small fw-bold" style="color: rgba(7,10,16,0.92);">${initials}</span>`;
+            sidebarAvatar.setAttribute('aria-label', `Admin avatar ${initials}`);
+        }
+    }
+
     async function loadAdminContext() {
         if (!window.apiGet) return;
 
@@ -23,7 +54,9 @@
         const admin = data?.admin;
 
         const navbarAdminName = byId('navbarAdminName');
-        if (navbarAdminName) navbarAdminName.textContent = safeText(admin?.name, 'Admin');
+        const adminName = safeText(admin?.name, 'Admin');
+        if (navbarAdminName) navbarAdminName.textContent = adminName;
+        setAdminAvatar(adminName);
 
         const dashUniName = byId('dashboardUniversityName');
         if (dashUniName) dashUniName.textContent = safeText(university?.university_name, '—');
@@ -58,6 +91,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        setAdminAvatar('Admin');
         loadAdminContext().catch((err) => {
             console.error('Failed to load admin context:', err);
             // If session expired, pages will handle via API errors.
