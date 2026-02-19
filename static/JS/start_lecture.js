@@ -40,33 +40,58 @@ function markTimetableCompleted(timetableId) {
 
 async function loadTodaysLecture() {
     try {
-        const lectures = await apiGet('/api/faculty/schedule/today');
+        const [lectures, attendanceToday] = await Promise.all([
+            apiGet('/api/faculty/schedule/today'),
+            apiGet('/api/faculty/attendance/today').catch(() => [])
+        ]);
             
-            const container = document.getElementById('lectureCardContainer');
-            if (lectures.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-calendar-times fa-2x mb-3"></i>
-                        <p class="mb-0">No lectures scheduled for today.</p>
-                    </div>`;
-                return;
+        const container = document.getElementById('lectureCardContainer');
+        if (!Array.isArray(lectures) || lectures.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-calendar-times fa-2x mb-3"></i>
+                    <p class="mb-0">No lectures scheduled for today.</p>
+                </div>`;
+            return;
+        }
+
+        const statusMap = new Map();
+        (Array.isArray(attendanceToday) ? attendanceToday : []).forEach((item) => {
+            if (!item || typeof item !== 'object') return;
+            statusMap.set(Number(item.timetable_id), item);
+        });
+
+        // Prefer actionable slots first.
+        const lecture = lectures.find((l) => {
+            const row = statusMap.get(Number(l.timetable_id));
+            const st = String(row?.status || '').toUpperCase();
+            return st === 'NOT_STARTED' || st === 'ONGOING' || !st;
+        }) || lectures[0];
+
+        currentTimetableId = lecture.timetable_id;
+        updateLectureCard(lecture);
+
+        const currentStatusRow = statusMap.get(Number(currentTimetableId)) || null;
+        const currentStatus = String(currentStatusRow?.status || '').toUpperCase();
+
+        if (currentStatus === 'ONGOING') {
+            if (currentStatusRow?.lecture_id) {
+                sessionStorage.setItem('active_lecture_id', String(currentStatusRow.lecture_id));
+                sessionStorage.setItem('active_timetable_id', String(currentTimetableId));
             }
+            setLectureActiveUI();
+            return;
+        }
 
-            const completedIds = new Set(getCompletedTimetableIds());
+        if (currentStatus === 'MARKED' || currentStatus === 'ENDED') {
+            setLectureCompletedUI();
+            return;
+        }
 
-            // Pick first lecture slot not completed today; fallback to first.
-            const lecture = lectures.find(l => !completedIds.has(Number(l.timetable_id))) || lectures[0];
-            currentTimetableId = lecture.timetable_id;
-            
-            updateLectureCard(lecture);
-
-            // If this slot is already completed today, show completed UI.
-            if (completedIds.has(Number(currentTimetableId))) {
-                setLectureCompletedUI();
-                return;
-            }
-
-            checkActiveSession(); // Check if we already started it locally
+        // Default state: allow starting.
+        sessionStorage.removeItem('active_lecture_id');
+        sessionStorage.removeItem('active_timetable_id');
+        setLectureInactiveUI();
     } catch (error) {
         console.error('Failed to load schedule', error);
     }

@@ -25,59 +25,86 @@ class AttendanceService:
         Marks attendance for a list of students for a specific lecture.
         Input: List of { 'student_id': int, 'status': 'PRESENT'|'ABSENT' }
         """
-        if not isinstance(attendance_list, list) or not attendance_list:
-             # Basic validation, though empty list might be valid if no one showed up? 
-             # Let's verify strictness. If empty allow.
-             if attendance_list == []: return {"message": "No data to process", "count": 0}
-             raise ValidationError("Attendance list must be a list")
+        try:
+            lecture_id = int(lecture_id)
+        except (TypeError, ValueError):
+            raise ValidationError("lecture_id must be a valid integer")
 
-        # If any attendance exists for this lecture, do not allow editing/re-marking.
-        if self.attendance_repo.attendance_exists_for_lecture(lecture_id):
-            raise ValidationError('Attendance already marked for this lecture')
+        if not isinstance(attendance_list, list):
+            raise ValidationError("Attendance list must be a list")
 
-        # 1. Enqueue Request
+        # 1. Enqueue request
         self.request_queue.enqueue({
             'lecture_id': lecture_id,
             'students': attendance_list
         })
-        
-        # 2. Process Request
+
+        # 2. Process request
         req = self.request_queue.dequeue()
-        
-        # 3. Validation: Check if lecture is active
-        lecture = self.lecture_repo.find_by_id(req['lecture_id'])
+        req_lecture_id = req['lecture_id']
+
+        # 3. Validate lecture state before insert
+        lecture = self.lecture_repo.find_by_id(req_lecture_id)
         if not lecture:
             raise RecordNotFoundError("Lecture not found")
-        if lecture['status'] != 'ONGOING':
+
+        lecture_status = (lecture.get('status') or '').upper()
+        if lecture_status != 'ONGOING':
             raise LectureNotActiveError()
 
-        marked_count = 0
-        seen = set()  # per-request duplicate check
-        
-        # 4. Mark Each Student
-        for item in req['students']:
-            student_id = item.get('student_id')
-            status = item.get('status', 'PRESENT') # Default to PRESENT if missing, though UI should send it
+        if self.attendance_repo.attendance_exists(req_lecture_id):
+            raise AttendanceAlreadyMarkedError()
 
-            # Skip duplicates within the same submission payload
-            key = (req['lecture_id'], student_id)
+        marked_count = 0
+        seen = set()
+
+        # 4. Insert attendance rows. If any insert fails, status update is never executed.
+        for item in req['students']:
+            if not isinstance(item, dict):
+                raise ValidationError("Each attendance row must be an object")
+
+            student_id = item.get('student_id')
+            if student_id is None:
+                raise ValidationError("student_id is required")
+
+            try:
+                student_id = int(student_id)
+            except (TypeError, ValueError):
+                raise ValidationError("student_id must be a valid integer")
+
+            status = str(item.get('status', 'PRESENT')).upper()
+            if status not in ('PRESENT', 'ABSENT'):
+                raise ValidationError("status must be PRESENT or ABSENT")
+
+            key = (req_lecture_id, student_id)
             if key in seen:
                 continue
             seen.add(key)
 
-            try:
-                # Mark in DB
-                self.attendance_repo.mark_attendance(req['lecture_id'], student_id, status)
-                marked_count += 1
-                
-            except Exception as e:
-                 raise ValidationError(str(e)) from e
+            self.attendance_repo.mark_attendance(req_lecture_id, student_id, status)
+            marked_count += 1
 
-        return {"message": "Attendance marked successfully", "count": marked_count}
+        # 5. Update lecture state only after successful inserts
+        updated = self.lecture_repo.update_status(req_lecture_id, "MARKED")
+        if not updated:
+            raise ValidationError("Failed to update lecture status")
 
-    def get_today_lectures_with_status(self, faculty_id):
-        """Returns today's lectures for the faculty with attendance_marked flag."""
-        from datetime import timedelta, time
+        from repositories.timetable_repository import TimetableRepository
+        timetable = TimetableRepository.find_by_id(lecture.get('timetable_id')) if lecture.get('timetable_id') else None
+        subject = timetable.get('subject') if timetable else None
+
+        return {
+            "lecture_id": req_lecture_id,
+            "subject": subject,
+            "status": "MARKED",
+            "attendance_marked": True,
+            "count": marked_count,
+        }
+
+    def get_today_classes_with_status(self, faculty_id):
+        """Returns only today's timetable classes with attendance-driven state."""
+        from datetime import datetime, timedelta, time
+        from repositories.timetable_repository import TimetableRepository
 
         def to_time_str(value):
             if value is None:
@@ -92,31 +119,71 @@ class AttendanceService:
                 return value.strftime('%H:%M:%S')
             return value
 
-        lectures = self.lecture_repo.find_today_lectures_by_faculty(faculty_id) or []
+        try:
+            faculty_id = int(faculty_id)
+        except (TypeError, ValueError):
+            raise ValidationError("faculty_id must be a valid integer")
+
+        today_day_full = datetime.now().strftime("%A").upper()
+        day_map = {
+            'MONDAY': 'MON',
+            'TUESDAY': 'TUE',
+            'WEDNESDAY': 'WED',
+            'THURSDAY': 'THU',
+            'FRIDAY': 'FRI',
+            'SATURDAY': 'SAT',
+            'SUNDAY': 'SUN',
+        }
+        today_day = day_map.get(today_day_full, today_day_full[:3])
+        today_date = datetime.now().date()
+
+        today_slots = TimetableRepository.find_by_faculty_and_day(faculty_id, today_day) or []
+
         result = []
-        for l in lectures:
-            lecture_id = l.get('lecture_id') if isinstance(l, dict) else None
-            if not lecture_id:
-                continue
+        for slot in today_slots:
+            timetable_id = slot.get('timetable_id')
+            lecture = self.lecture_repo.find_by_timetable_and_date(timetable_id, today_date) if timetable_id else None
+            lecture_id = lecture.get('lecture_id') if lecture else None
 
-            marked = self.attendance_repo.attendance_exists_for_lecture(lecture_id)
-
-            start_time = to_time_str(l.get('start_time')) if isinstance(l, dict) else None
-            end_time = to_time_str(l.get('end_time')) if isinstance(l, dict) else None
+            if lecture_id:
+                attendance_marked = bool(self.attendance_repo.attendance_exists(lecture_id))
+                status = 'MARKED' if attendance_marked else 'ONGOING'
+            else:
+                attendance_marked = False
+                status = 'NOT_STARTED'
 
             result.append({
+                'timetable_id': timetable_id,
+                'subject': slot.get('subject'),
+                'start_time': to_time_str(slot.get('start_time')),
+                'end_time': to_time_str(slot.get('end_time')),
                 'lecture_id': lecture_id,
-                'subject': l.get('subject') if isinstance(l, dict) else None,
-                'start_time': start_time,
-                'end_time': end_time,
-                'lecture_status': l.get('status') if isinstance(l, dict) else None,
-                'attendance_marked': bool(marked),
+                'status': status,
+                'lecture_status': status,
+                'attendance_marked': attendance_marked,
             })
 
+        result.sort(key=lambda x: x.get('start_time') or '')
         return result
+
+    def get_today_lectures_with_status(self, faculty_id):
+        """Backward-compatible wrapper for existing controller calls."""
+        return self.get_today_classes_with_status(faculty_id)
 
     def get_attendance_by_lecture(self, lecture_id):
         """Retrieves attendance list for a lecture."""
+        try:
+            lecture_id = int(lecture_id)
+        except (TypeError, ValueError):
+            raise ValidationError("lecture_id must be a valid integer")
+
+        lecture = self.lecture_repo.find_by_id(lecture_id)
+        if not lecture:
+            raise RecordNotFoundError("Lecture not found")
+
+        if (lecture.get('status') or '').upper() != 'MARKED':
+            raise ValidationError("Attendance preview is available only for MARKED lectures")
+
         return self.attendance_repo.find_by_lecture(lecture_id)
 
     def get_students_for_lecture(self, lecture_id):

@@ -193,6 +193,8 @@ class AdminService:
             if isinstance(r, dict):
                 r['start_time'] = to_time_str(r.get('start_time'))
                 r['end_time'] = to_time_str(r.get('end_time'))
+                timetable_id = r.get('timetable_id')
+                r['has_lectures'] = bool(self.timetable_repo.has_existing_lectures(timetable_id)) if timetable_id else False
         return rows
 
     def get_reports(self, university_id):

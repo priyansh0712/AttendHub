@@ -113,13 +113,17 @@ function renderTable(data) {
         const total = item.stats ? item.stats.total : 0;
         
         // Status Badge
+        const normalizedStatus = String(item?.status || '').toUpperCase();
         let statusBadge = '';
-        if (item.status === 'ENDED') {
+        if (normalizedStatus === 'MARKED' || normalizedStatus === 'ENDED') {
             statusBadge = '<span class="badge bg-success">Submitted</span>';
-        } else if (item.status === 'ONGOING') {
-             statusBadge = '<span class="badge bg-warning text-dark">Ongoing</span>';
+        } else if (normalizedStatus === 'ONGOING') {
+            statusBadge = '<span class="badge bg-warning text-dark">Ongoing</span>';
+        } else if (!normalizedStatus && total > 0) {
+            // Backward-compat for legacy rows with blank enum value.
+            statusBadge = '<span class="badge bg-success">Submitted</span>';
         } else {
-             statusBadge = '<span class="badge bg-secondary">Unknown</span>';
+            statusBadge = '<span class="badge bg-secondary">Unknown</span>';
         }
 
         const row = document.createElement('tr');

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const refreshBtn = document.getElementById('refreshLecturesBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', loadTodayLectures);
 
@@ -80,20 +80,28 @@ function renderTodayLectures(lectures) {
 
     lectures.forEach(l => {
         const timeText = `${formatTime(l.start_time)} - ${formatTime(l.end_time)}`;
-        const lectureStatus = (l.lecture_status || '').toUpperCase();
+        const lectureStatus = (l.status || l.lecture_status || '').toUpperCase();
         const isOngoing = lectureStatus === 'ONGOING';
+        const isMarked = lectureStatus === 'MARKED';
+        const isNotStarted = lectureStatus === 'NOT_STARTED';
 
-        const statusBadge = l.attendance_marked
-            ? '<span class="badge bg-secondary">Locked</span>'
-            : (isOngoing ? '<span class="badge bg-warning text-dark">Pending</span>' : `<span class="badge bg-dark">${escapeHtml(lectureStatus || 'N/A')}</span>`);
+        const statusBadge = isMarked
+            ? '<span class="badge bg-secondary">Marked</span>'
+            : (isOngoing
+                ? '<span class="badge bg-warning text-dark">Ongoing</span>'
+                : (isNotStarted
+                    ? '<span class="badge bg-info text-dark">Not Started</span>'
+                    : `<span class="badge bg-dark">${escapeHtml(lectureStatus || 'N/A')}</span>`));
 
         let actionBtn;
-        if (l.attendance_marked) {
-            actionBtn = `<button class="btn btn-sm btn-outline-light border" data-action="preview" data-lecture-id="${l.lecture_id}">Preview</button>`;
-        } else if (!isOngoing) {
-            actionBtn = `<button class="btn btn-sm btn-outline-secondary" disabled title="Lecture is not ongoing">Mark</button>`;
-        } else {
+        if (isOngoing && l.lecture_id) {
             actionBtn = `<button class="btn btn-sm btn-primary" data-action="mark" data-lecture-id="${l.lecture_id}">Mark Attendance</button>`;
+        } else if (isMarked && l.lecture_id) {
+            actionBtn = `<button class="btn btn-sm btn-outline-light border" data-action="preview" data-lecture-id="${l.lecture_id}">Preview</button>`;
+        } else if (isNotStarted && l.timetable_id) {
+            actionBtn = `<button class="btn btn-sm btn-outline-primary" data-action="start" data-timetable-id="${l.timetable_id}">Start Lecture</button>`;
+        } else {
+            actionBtn = `<button class="btn btn-sm btn-outline-secondary" disabled>No Action</button>`;
         }
 
         const row = document.createElement('tr');
@@ -107,14 +115,43 @@ function renderTodayLectures(lectures) {
     });
 
     body.querySelectorAll('button[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lectureId = parseInt(btn.getAttribute('data-lecture-id'), 10);
+        btn.addEventListener('click', async () => {
             const action = btn.getAttribute('data-action');
-            if (!lectureId) return;
-            if (action === 'mark') startMarkFlow(lectureId);
-            if (action === 'preview') previewAttendance(lectureId);
+
+            if (action === 'mark') {
+                const lectureId = parseInt(btn.getAttribute('data-lecture-id'), 10);
+                if (lectureId) startMarkFlow(lectureId);
+            }
+            if (action === 'preview') {
+                const lectureId = parseInt(btn.getAttribute('data-lecture-id'), 10);
+                if (lectureId) previewAttendance(lectureId);
+            }
+            if (action === 'start') {
+                const timetableId = parseInt(btn.getAttribute('data-timetable-id'), 10);
+                if (timetableId) await startLectureFromAttendancePage(timetableId);
+            }
         });
     });
+}
+
+async function startLectureFromAttendancePage(timetableId) {
+    try {
+        const data = await apiPostJson('/api/faculty/lecture/start', { timetable_id: timetableId });
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'success', title: 'Lecture Started', message: 'You can now mark attendance.' });
+        }
+
+        await loadTodayLectures();
+
+        if (data && data.lecture_id) {
+            await startMarkFlow(data.lecture_id);
+        }
+    } catch (error) {
+        console.error('Failed to start lecture', error);
+        if (typeof window.showToast === 'function') {
+            window.showToast({ type: 'error', title: 'Error', message: getApiErrorMessage(error, 'Failed to start lecture') });
+        }
+    }
 }
 
 async function startMarkFlow(lectureId) {
@@ -237,7 +274,7 @@ async function submitAttendance() {
         const buttons = Array.from(document.querySelectorAll('button'));
         submitBtn = buttons.find(b => b.textContent.includes('Submit Attendance'));
     }
-    
+
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
@@ -249,7 +286,7 @@ async function submitAttendance() {
         // Find checked radio
         const presentRadio = document.getElementById(`p_${id}`);
         const status = presentRadio && presentRadio.checked ? 'PRESENT' : 'ABSENT';
-        
+
         return {
             student_id: id,
             status: status
@@ -282,7 +319,7 @@ async function submitAttendance() {
         if (typeof window.showToast === 'function') {
             window.showToast({ type: 'error', title: 'Error', message: getApiErrorMessage(error, 'Submission failed') });
         }
-         if (submitBtn) {
+        if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Submit Attendance';
         }

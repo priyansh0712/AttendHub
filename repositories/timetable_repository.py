@@ -62,6 +62,92 @@ class TimetableRepository:
             close_connection(conn)
 
     @staticmethod
+    def get_by_id(timetable_id):
+        """Alias method to fetch a timetable entry by ID."""
+        return TimetableRepository.find_by_id(timetable_id)
+
+    @staticmethod
+    def update_timetable(timetable_id, data):
+        """Updates a timetable entry."""
+        conn = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            query = """
+                UPDATE timetable
+                SET
+                    subject = %s,
+                    faculty_id = %s,
+                    day = %s,
+                    start_time = %s,
+                    end_time = %s,
+                    department = %s,
+                    semester = %s
+                WHERE timetable_id = %s
+            """
+            cursor.execute(
+                query,
+                (
+                    data.get('subject'),
+                    data.get('faculty_id'),
+                    data.get('day'),
+                    data.get('start_time'),
+                    data.get('end_time'),
+                    data.get('department'),
+                    data.get('semester'),
+                    timetable_id,
+                ),
+            )
+            conn.commit()
+            return cursor.rowcount
+
+        except Error as e:
+            raise DatabaseError(f"Failed to update timetable entry: {e}")
+        finally:
+            close_connection(conn)
+
+    @staticmethod
+    def has_existing_lectures(timetable_id):
+        """Returns True if any lecture exists for the timetable entry."""
+        conn = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            query = "SELECT 1 FROM lectures WHERE timetable_id = %s LIMIT 1"
+            cursor.execute(query, (timetable_id,))
+            return cursor.fetchone() is not None
+        except Error as e:
+            raise DatabaseError(f"Failed to check existing lectures: {e}")
+        finally:
+            close_connection(conn)
+
+    @staticmethod
+    def has_faculty_time_conflict(faculty_id, day, start_time, end_time, exclude_id=None):
+        """Returns True if another timetable row overlaps for same faculty/day."""
+        conn = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            query = """
+                SELECT 1
+                FROM timetable
+                WHERE faculty_id = %s
+                  AND UPPER(day) = UPPER(%s)
+                  AND (%s IS NULL OR timetable_id <> %s)
+                  AND start_time < %s
+                  AND end_time > %s
+                LIMIT 1
+            """
+            cursor.execute(query, (faculty_id, day, exclude_id, exclude_id, end_time, start_time))
+            return cursor.fetchone() is not None
+        except Error as e:
+            raise DatabaseError(f"Failed to check faculty time conflict: {e}")
+        finally:
+            close_connection(conn)
+
+    @staticmethod
     def find_by_faculty(faculty_id):
         """Finds timetable entries for a specific faculty member."""
         conn = None
@@ -81,6 +167,27 @@ class TimetableRepository:
             
         except Error as e:
             raise DatabaseError(f"Failed to find timetable for faculty: {e}")
+        finally:
+            close_connection(conn)
+
+    @staticmethod
+    def find_by_faculty_and_day(faculty_id, day):
+        """Finds timetable entries for a faculty member for a specific day."""
+        conn = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+
+            query = """
+                SELECT * FROM timetable
+                WHERE faculty_id = %s AND UPPER(day) = %s
+                ORDER BY start_time
+            """
+            cursor.execute(query, (faculty_id, str(day).upper()))
+            return cursor.fetchall()
+
+        except Error as e:
+            raise DatabaseError(f"Failed to find timetable for faculty/day: {e}")
         finally:
             close_connection(conn)
 

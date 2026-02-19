@@ -71,8 +71,8 @@ class LectureRepository:
             close_connection(conn)
 
     @staticmethod
-    def find_by_timetable_and_date(timetable_id, lecture_date):
-        """Finds any lecture for a specific timetable slot and date (ONGOING or ENDED)."""
+    def find_by_timetable_and_date(timetable_id, today_date):
+        """Finds a lecture for a specific timetable slot and date."""
         conn = None
         try:
             conn = get_connection()
@@ -83,7 +83,7 @@ class LectureRepository:
                 WHERE timetable_id = %s AND lecture_date = %s
                 LIMIT 1
             """
-            cursor.execute(query, (timetable_id, lecture_date))
+            cursor.execute(query, (timetable_id, today_date))
             return cursor.fetchone()
 
         except Error as e:
@@ -129,6 +129,28 @@ class LectureRepository:
             
         except Error as e:
             raise DatabaseError(f"Failed to end lecture: {e}")
+        finally:
+            close_connection(conn)
+
+    @staticmethod
+    def update_status(lecture_id, status):
+        """Updates lecture status for a specific lecture."""
+        conn = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            query = """
+                UPDATE lectures
+                SET status = %s
+                WHERE lecture_id = %s
+            """
+            cursor.execute(query, (status, lecture_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+        except Error as e:
+            raise DatabaseError(f"Failed to update lecture status: {e}")
         finally:
             close_connection(conn)
 

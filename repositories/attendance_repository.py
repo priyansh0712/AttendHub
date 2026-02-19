@@ -1,6 +1,7 @@
 from db_connection import get_connection, close_connection
-from exceptions.custom_exceptions import DatabaseError
+from exceptions.custom_exceptions import DatabaseError, DuplicateRecordError
 from mysql.connector import Error, IntegrityError
+from mysql.connector.errorcode import ER_DUP_ENTRY
 
 class AttendanceRepository:
     """
@@ -23,6 +24,10 @@ class AttendanceRepository:
             conn.commit()
             
             return cursor.lastrowid
+        except IntegrityError as e:
+            if getattr(e, 'errno', None) == ER_DUP_ENTRY:
+                raise DuplicateRecordError("Attendance already exists for this lecture and student") from e
+            raise DatabaseError(f"Failed to mark attendance: {e}") from e
             
         except Error as e:
             raise DatabaseError(f"Failed to mark attendance: {e}")
@@ -30,7 +35,7 @@ class AttendanceRepository:
             close_connection(conn)
 
     @staticmethod
-    def attendance_exists_for_lecture(lecture_id):
+    def attendance_exists(lecture_id):
         """Returns True if any attendance row exists for this lecture."""
         conn = None
         try:
@@ -42,6 +47,11 @@ class AttendanceRepository:
             raise DatabaseError(f"Failed to check attendance existence: {e}")
         finally:
             close_connection(conn)
+
+    @staticmethod
+    def attendance_exists_for_lecture(lecture_id):
+        """Backward-compatible alias for legacy callers."""
+        return AttendanceRepository.attendance_exists(lecture_id)
 
     @staticmethod
     def get_count_summary(lecture_id):

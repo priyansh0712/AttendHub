@@ -10,10 +10,11 @@ class AdminController(BaseController):
     Controller for Admin-only endpoints.
     Delegates to Admin, Faculty, and Student services.
     """
-    def __init__(self, admin_service, faculty_service, student_service, analytics_service=None):
+    def __init__(self, admin_service, faculty_service, student_service, timetable_service=None, analytics_service=None):
         self.admin_service = admin_service
         self.faculty_service = faculty_service
         self.student_service = student_service
+        self.timetable_service = timetable_service
         self.analytics_service = analytics_service
 
     def get_dashboard_summary(self):
@@ -338,6 +339,37 @@ class AdminController(BaseController):
                 raise AuthenticationError('Unauthorized')
             timetable = self.admin_service.get_timetable(university_id)
             return self.success_response(data=timetable, message='Timetable list', status_code=200)
+        except Exception as e:
+            return self.handle_exception(e)
+
+    def get_timetable_item(self, timetable_id):
+        try:
+            university_id = session.get('university_id')
+            if not university_id:
+                raise AuthenticationError('Unauthorized')
+            if not self.timetable_service:
+                raise ValidationError('Timetable service unavailable')
+
+            row = self.timetable_service.get_timetable_by_id(timetable_id)
+            return self.success_response(data=row, message='Timetable detail', status_code=200)
+        except Exception as e:
+            return self.handle_exception(e)
+
+    def update_timetable(self, timetable_id):
+        try:
+            university_id = session.get('university_id')
+            if not university_id:
+                raise AuthenticationError('Unauthorized')
+            if not self.timetable_service:
+                raise ValidationError('Timetable service unavailable')
+
+            data = request.get_json(silent=True) or {}
+            self.timetable_service.edit_timetable(timetable_id, data)
+            return self.success_response(
+                data={"message": "Timetable updated successfully"},
+                message='Timetable updated successfully',
+                status_code=200
+            )
         except Exception as e:
             return self.handle_exception(e)
 

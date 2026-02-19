@@ -21,6 +21,7 @@ def patch_db():
             'db_patch_university_profile.sql',
             'db_patch_timetable_sunday.sql',
             'db_patch_password_reset.sql',
+            'db_patch_lecture_state.sql',
         ]
 
         for patch_file in patch_files:

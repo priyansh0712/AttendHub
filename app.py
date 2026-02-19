@@ -28,6 +28,7 @@ from services.student import StudentService
 from services.lecture import LectureService
 from services.attendance import AttendanceService
 from services.analytics import AnalyticsService
+from services.timetable import TimetableService
 
 # 4. Import Controllers
 from controllers.auth import AuthController
@@ -131,6 +132,9 @@ faculty_mgmt_service = FacultyService(faculty_repo, audit_stack=audit_stack)
 # 4. Student Service (Administrative/View Logic)
 student_mgmt_service = StudentService(student_repo, timetable_repo, attendance_repo)
 
+# 4.1 Timetable Service (Edit Workflow Logic)
+timetable_service = TimetableService(timetable_repo=timetable_repo)
+
 # 5. Lecture Service (Operational Logic)
 lecture_service = LectureService(
     timetable_repo=timetable_repo,
@@ -155,7 +159,8 @@ auth_controller = AuthController(auth_service)
 admin_controller = AdminController(
     admin_service=admin_service,
     faculty_service=faculty_mgmt_service,
-    student_service=student_mgmt_service
+    student_service=student_mgmt_service,
+    timetable_service=timetable_service
 )
 
 faculty_controller = FacultyController(
@@ -204,6 +209,8 @@ admin_bp.add_url_rule('/faculty/list', 'list_faculty', admin_controller.list_fac
 admin_bp.add_url_rule('/student/list', 'list_students', admin_controller.list_students, methods=['GET'])
 admin_bp.add_url_rule('/timetable/upload', 'upload_timetable', admin_controller.upload_timetable, methods=['POST'])
 admin_bp.add_url_rule('/timetable/list', 'list_timetable', admin_controller.list_timetable, methods=['GET'])
+admin_bp.add_url_rule('/timetable/<int:timetable_id>', 'get_timetable_item', admin_controller.get_timetable_item, methods=['GET'])
+admin_bp.add_url_rule('/timetable/<int:timetable_id>', 'update_timetable_item', admin_controller.update_timetable, methods=['PUT'])
 admin_bp.add_url_rule('/reports/list', 'list_reports', admin_controller.list_reports, methods=['GET'])
 admin_bp.add_url_rule('/university/profile', 'get_university_profile', admin_controller.get_university_profile, methods=['GET'])
 admin_bp.add_url_rule('/university/profile/update', 'update_university_profile', admin_controller.update_university_profile, methods=['POST'])

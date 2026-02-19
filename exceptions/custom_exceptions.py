@@ -42,8 +42,8 @@ class LinkedListEmptyError(Exception):
         super().__init__(message)
 
 class AttendanceAlreadyMarkedError(AppError):
-    def __init__(self):
-        super().__init__("Attendance already marked for this student", 409)
+    def __init__(self, message="Attendance already marked for this lecture"):
+        super().__init__(message, 409)
 
 class LectureNotActiveError(AppError):
     def __init__(self):
