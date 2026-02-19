@@ -151,8 +151,14 @@ if (document.getElementById('loginForm') && window.location.pathname.includes('/
             window.location.href = '/admin/dashboard';
         } catch (error) {
             console.error('Error:', error);
+            const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
+
+            // Inline red error (requested UX)
+            showError(loginId, msg);
+            showError(password, msg);
+            loginId.focus();
+
             if (window.showToast) {
-                const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
                 window.showToast({ type: 'error', title: 'Invalid Login', message: msg });
             }
         } finally {
@@ -208,8 +214,13 @@ if (document.getElementById('loginForm') && window.location.pathname.includes('/
             window.location.href = '/faculty/dashboard';
         } catch (error) {
             console.error('Error:', error);
+            const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
+
+            showError(loginId, msg);
+            showError(password, msg);
+            loginId.focus();
+
             if (window.showToast) {
-                const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
                 window.showToast({ type: 'error', title: 'Invalid Login', message: msg });
             }
         } finally {
@@ -265,8 +276,13 @@ if (document.getElementById('loginForm') && window.location.pathname.includes('/
             window.location.href = '/student/dashboard';
         } catch (error) {
             console.error('Error:', error);
+            const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
+
+            showError(loginId, msg);
+            showError(password, msg);
+            loginId.focus();
+
             if (window.showToast) {
-                const msg = (window.getApiErrorMessage && window.getApiErrorMessage(error, 'Login failed. Please check your credentials.')) || (error && error.message) || 'Login failed. Please check your credentials.';
                 window.showToast({ type: 'error', title: 'Invalid Login', message: msg });
             }
         } finally {
